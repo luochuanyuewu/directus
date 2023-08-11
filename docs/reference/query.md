@@ -81,8 +81,7 @@ In GraphQL, this can be achieved using Union Types.
 <template #sdk>
 
 ```js
-import { createDirectus } from '@directus/sdk';
-import { rest, readItems } from '@directus/sdk/rest';
+import { createDirectus, rest, readItems } from '@directus/sdk';
 
 const client = createDirectus('https://directus.example.com').with(rest());
 
@@ -179,8 +178,7 @@ query {
 <template #sdk>
 
 ```js
-import { createDirectus } from '@directus/sdk';
-import { rest, readItems } from '@directus/sdk/rest';
+import { createDirectus, rest, readItems } from '@directus/sdk';
 
 const client = createDirectus('https://directus.example.com').with(rest());
 
@@ -254,8 +252,7 @@ query {
 <template #sdk>
 
 ```js
-import { createDirectus } from '@directus/sdk';
-import { rest, readItems } from '@directus/sdk/rest';
+import { createDirectus, rest, readItems } from '@directus/sdk';
 
 const client = createDirectus('https://directus.example.com').with(rest());
 
@@ -314,8 +311,7 @@ query {
 <template #sdk>
 
 ```js
-import { createDirectus } from '@directus/sdk';
-import { rest, readItems } from '@directus/sdk/rest';
+import { createDirectus, rest, readItems } from '@directus/sdk';
 
 const client = createDirectus('https://directus.example.com').with(rest());
 
@@ -368,8 +364,7 @@ query {
 <template #sdk>
 
 ```js
-import { createDirectus } from '@directus/sdk';
-import { rest, readItems } from '@directus/sdk/rest';
+import { createDirectus, rest, readItems } from '@directus/sdk';
 
 const client = createDirectus('https://directus.example.com').with(rest());
 
@@ -412,8 +407,7 @@ query {
 <template #sdk>
 
 ```js
-import { createDirectus } from '@directus/sdk';
-import { rest, readItems } from '@directus/sdk/rest';
+import { createDirectus, rest, readItems } from '@directus/sdk';
 
 const client = createDirectus('https://directus.example.com').with(rest());
 
@@ -460,8 +454,7 @@ query {
 <template #sdk>
 
 ```js
-import { createDirectus } from '@directus/sdk';
-import { rest, readItems } from '@directus/sdk/rest';
+import { createDirectus, rest, readItems } from '@directus/sdk';
 
 const client = createDirectus('https://directus.example.com').with(rest());
 
@@ -529,8 +522,7 @@ query {
 <template #sdk>
 
 ```js
-import { createDirectus } from '@directus/sdk';
-import { rest, aggregate } from '@directus/sdk/rest';
+import { createDirectus, rest, aggregate } from '@directus/sdk';
 
 const client = createDirectus('https://directus.example.com').with(rest());
 
@@ -608,10 +600,9 @@ query {
 <template #sdk>
 
 ```js
-import { createDirectus } from '@directus/sdk';
-import { rest, readItems } from '@directus/sdk/rest';
+import { createDirectus, rest, readItems } from '@directus/sdk';
 
-const client = createDirectus('https://phzn-malleable.directus.app').with(staticToken()).with(rest());
+const client = createDirectus('https://directus.example.com').with(staticToken()).with(rest());
 
 const result = await client.request(
 	readItems('articles', {
@@ -672,10 +663,9 @@ query {
 <template #sdk>
 
 ```js
-import { createDirectus } from '@directus/sdk';
-import { rest, readItems } from '@directus/sdk/rest';
+import { createDirectus, rest, readItems } from '@directus/sdk';
 
-const client = createDirectus('https://phzn-malleable.directus.app').with(staticToken()).with(rest());
+const client = createDirectus('https://directus.example.com').with(staticToken()).with(rest());
 
 const result = await client.request(
 	readItems('articles', {
@@ -794,8 +784,7 @@ query {
 <template #sdk>
 
 ```js
-import { createDirectus } from '@directus/sdk';
-import { rest, readItems } from '@directus/sdk/rest';
+import { createDirectus, rest, readItems } from '@directus/sdk';
 
 const client = createDirectus('https://directus.example.com').with(rest());
 
