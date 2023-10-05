@@ -26,6 +26,11 @@ const defaultRealTimeConfig: WebSocketConfig = {
 	},
 };
 
+const WebSocketState = {
+	OPEN: 1,
+	CLOSED: 3,
+} as const;
+
 /**
  * Creates a client to communicate with a Directus REST WebSocket.
  *
@@ -36,7 +41,7 @@ const defaultRealTimeConfig: WebSocketConfig = {
 export function realtime(config: WebSocketConfig = {}) {
 	return <Schema extends object>(client: DirectusClient<Schema>) => {
 		config = { ...defaultRealTimeConfig, ...config };
-		let socket: globalThis.WebSocket | null = null;
+		let socket: WebSocket | null = null;
 		let uid = generateUid();
 		let reconnectAttempts = 0;
 		let reconnecting = false;
@@ -53,7 +58,7 @@ export function realtime(config: WebSocketConfig = {}) {
 		};
 
 		const getSocketUrl = async (currentClient: AuthWSClient<Schema>) => {
-			if ('url' in config) return await withStrictAuth(new URL(config.url), currentClient);
+			if ('url' in config) return await withStrictAuth(new client.globals.URL(config.url), currentClient);
 
 			// if the main URL is a websocket URL use it directly!
 			if (['ws:', 'wss:'].includes(client.url.protocol)) {
@@ -61,7 +66,7 @@ export function realtime(config: WebSocketConfig = {}) {
 			}
 
 			// try filling in the defaults based on the main URL
-			const newUrl = new URL(client.url.toString());
+			const newUrl = new client.globals.URL(client.url.toString());
 			newUrl.protocol = client.url.protocol === 'https:' ? 'wss:' : 'ws:';
 			newUrl.pathname = '/websocket';
 
@@ -102,8 +107,8 @@ export function realtime(config: WebSocketConfig = {}) {
 			message: new Set<WebSocketEventHandler>([]),
 		};
 
-		const handleMessages = async (ws: globalThis.WebSocket, currentClient: AuthWSClient<Schema>) => {
-			while (ws.readyState !== WebSocket.CLOSED) {
+		const handleMessages = async (ws: WebSocket, currentClient: AuthWSClient<Schema>) => {
+			while (ws.readyState !== WebSocketState.CLOSED) {
 				const message = await messageCallback(ws).catch(() => {
 					/* ignore invalid messages */
 				});
@@ -111,11 +116,23 @@ export function realtime(config: WebSocketConfig = {}) {
 				if (!message) continue;
 
 				if ('type' in message) {
-					if (message['type'] === 'auth' && hasAuth(currentClient)) {
-						const access_token = await currentClient.getToken();
+					if (
+						message['type'] === 'auth' &&
+						'status' in message &&
+						message['status'] === 'error' &&
+						'error' in message
+					) {
+						if (message['error'] === 'TOKEN_EXPIRED' && hasAuth(currentClient)) {
+							const access_token = await currentClient.getToken();
 
-						if (access_token) {
-							ws.send(auth({ access_token }));
+							if (access_token) {
+								ws.send(auth({ access_token }));
+								continue;
+							}
+						}
+
+						if (message['error'] === 'AUTH_TIMEOUT') {
+							ws.close();
 							continue;
 						}
 					}
@@ -138,7 +155,7 @@ export function realtime(config: WebSocketConfig = {}) {
 
 				return new Promise<void>((resolve, reject) => {
 					let resolved = false;
-					const ws = new globalThis.WebSocket(url);
+					const ws = new client.globals.WebSocket(url);
 
 					ws.addEventListener('open', async (evt: Event) => {
 						if (config.authMode === 'handshake' && hasAuth(self)) {
@@ -156,8 +173,7 @@ export function realtime(config: WebSocketConfig = {}) {
 
 					ws.addEventListener('error', (evt: Event) => {
 						eventHandlers['error'].forEach((handler) => handler.call(ws, evt));
-						resetConnection();
-						reconnect.call(this);
+						ws.close();
 						if (!resolved) reject(evt);
 					});
 
@@ -172,7 +188,7 @@ export function realtime(config: WebSocketConfig = {}) {
 				});
 			},
 			disconnect() {
-				if (socket && socket?.readyState === WebSocket.OPEN) {
+				if (socket && socket?.readyState === WebSocketState.OPEN) {
 					socket.close();
 				}
 
@@ -199,7 +215,7 @@ export function realtime(config: WebSocketConfig = {}) {
 				return () => eventHandlers[event].delete(callback);
 			},
 			sendMessage(message: string | Record<string, any>) {
-				if (!socket || socket?.readyState !== WebSocket.OPEN) {
+				if (!socket || socket?.readyState !== WebSocketState.OPEN) {
 					// TODO use directus error
 					throw new Error('websocket connection not OPEN');
 				}
@@ -215,11 +231,11 @@ export function realtime(config: WebSocketConfig = {}) {
 
 				socket?.send(JSON.stringify(message));
 			},
-			async subscribe<Collection extends keyof Schema, Options extends SubscribeOptions<Schema, Collection>>(
+			async subscribe<Collection extends keyof Schema, const Options extends SubscribeOptions<Schema, Collection>>(
 				collection: Collection,
 				options = {} as Options
 			) {
-				if (!socket || socket.readyState !== WebSocket.OPEN) await this.connect();
+				if (!socket || socket.readyState !== WebSocketState.OPEN) await this.connect();
 				if ('uid' in options === false) options.uid = uid.next().value;
 
 				let subscribed = true;
@@ -228,15 +244,13 @@ export function realtime(config: WebSocketConfig = {}) {
 
 				send({ ...options, collection, type: 'subscribe' });
 
-				// const initialMessage = await messageCallback(ws);
-
 				async function* subscriptionGenerator(): AsyncGenerator<
 					SubscriptionOutput<Schema, Collection, Options['query'], SubscriptionEvents>,
 					void,
 					unknown
 				> {
-					while (subscribed && socket && socket.readyState === WebSocket.OPEN) {
-						const message = await messageCallback(socket).catch(() => {
+					while (subscribed && ws && ws.readyState === WebSocketState.OPEN) {
+						const message = await messageCallback(ws).catch(() => {
 							/* let the loop continue */
 						});
 
@@ -264,7 +278,7 @@ export function realtime(config: WebSocketConfig = {}) {
 					if (config.reconnect && reconnecting) {
 						while (reconnecting) await sleep(10);
 
-						if (socket && socket.readyState === WebSocket.OPEN) {
+						if (socket && socket.readyState === WebSocketState.OPEN) {
 							// re-subscribe on the new connection
 							socket.send(JSON.stringify({ ...options, collection, type: 'subscribe' }));
 
