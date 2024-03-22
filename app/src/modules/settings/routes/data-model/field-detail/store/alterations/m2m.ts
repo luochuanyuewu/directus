@@ -1,8 +1,10 @@
 import { StateUpdates, State, HelperFunctions } from '../types';
 import { set } from 'lodash';
-import { useCollectionsStore } from '@/stores/collections';
 import { useFieldsStore } from '@/stores/fields';
 import { useRelationsStore } from '@/stores/relations';
+import { collectionExists } from '../../../utils/collection-exists';
+import { getAutomaticJunctionCollectionName } from '../../../utils/get-junction-collection-name';
+import { fieldExists } from '../../../utils/field-exists';
 
 export function applyChanges(updates: StateUpdates, state: State, helperFn: HelperFunctions) {
 	const { hasChanged } = helperFn;
@@ -156,37 +158,6 @@ export function autoGenerateJunctionFields(updates: StateUpdates, state: State, 
 	}
 }
 
-export function getAutomaticJunctionCollectionName(collectionA: string, collectionB: string) {
-	let index = 0;
-	let name = getName(index);
-
-	while (collectionExists(name)) {
-		index++;
-		name = getName(index);
-	}
-
-	return name;
-
-	function getName(index: number) {
-		let name = `${collectionA}_${collectionB}`;
-
-		if (name.startsWith('directus_')) {
-			name = 'junction_' + name;
-		}
-
-		if (index) return name + '_' + index;
-		return name;
-	}
-}
-
-function collectionExists(collection: string) {
-	return !!useCollectionsStore().getCollection(collection);
-}
-
-function fieldExists(collection: string, field: string) {
-	return !!useFieldsStore().getField(collection, field);
-}
-
 export function generateCollections(updates: StateUpdates, state: State, { getCurrent }: HelperFunctions) {
 	const junctionCollection = getCurrent('relations.o2m.collection');
 	const relatedCollection = getCurrent('relations.m2o.related_collection');
@@ -257,7 +228,7 @@ function generateFields(updates: StateUpdates, state: State, { getCurrent }: Hel
 		fieldsStore.getPrimaryKeyFieldForCollection(relatedCollection) ?? getCurrent('collections.related.fields[0]');
 
 	const existsJunctionRelated = relationsStore.relations.find(
-		(relation) => relation.collection === junctionCollection && relation.field === junctionRelated
+		(relation) => relation.collection === junctionCollection && relation.field === junctionRelated,
 	);
 
 	if (existsJunctionRelated) {

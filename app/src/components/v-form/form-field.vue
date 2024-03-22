@@ -8,42 +8,37 @@ import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import FormFieldInterface from './form-field-interface.vue';
 import FormFieldLabel from './form-field-label.vue';
-import FormFieldMenu from './form-field-menu.vue';
+import FormFieldMenu, { type MenuOptions } from './form-field-menu.vue';
 import FormFieldRawEditor from './form-field-raw-editor.vue';
 import type { FormField } from './types';
 
-interface Props {
-	field: FormField;
-	batchMode?: boolean;
-	batchActive?: boolean;
-	disabled?: boolean;
-	modelValue?: any;
-	initialValue?: any;
-	primaryKey?: string | number;
-	loading?: boolean;
-	validationError?: ValidationError;
-	autofocus?: boolean;
-	badge?: string;
-	rawEditorEnabled?: boolean;
-	rawEditorActive?: boolean;
-	direction?: string;
-}
-
-const props = withDefaults(defineProps<Props>(), {
-	batchMode: false,
-	batchActive: false,
-	disabled: false,
-	modelValue: undefined,
-	initialValue: undefined,
-	primaryKey: undefined,
-	loading: false,
-	validationError: undefined,
-	autofocus: false,
-	badge: undefined,
-	rawEditorEnabled: false,
-	rawEditorActive: false,
-	direction: undefined,
-});
+const props = withDefaults(
+	defineProps<{
+		field: FormField;
+		batchMode?: boolean;
+		batchActive?: boolean;
+		disabled?: boolean;
+		modelValue?: any;
+		initialValue?: any;
+		primaryKey?: string | number;
+		loading?: boolean;
+		validationError?: ValidationError;
+		autofocus?: boolean;
+		badge?: string;
+		rawEditorEnabled?: boolean;
+		rawEditorActive?: boolean;
+		disabledMenuOptions?: MenuOptions[];
+		direction?: string;
+	}>(),
+	{
+		modelValue: undefined,
+		initialValue: undefined,
+		primaryKey: undefined,
+		validationError: undefined,
+		badge: undefined,
+		direction: undefined,
+	},
+);
 
 const emit = defineEmits(['toggle-batch', 'toggle-raw', 'unset', 'update:modelValue', 'setFieldValue']);
 
@@ -126,7 +121,7 @@ function useComputedValues() {
 	const internalValue = ref<any>(getInternalValue());
 
 	const isEdited = computed(
-		() => props.modelValue !== undefined && isEqual(props.modelValue, props.initialValue) === false
+		() => props.modelValue !== undefined && isEqual(props.modelValue, props.initialValue) === false,
 	);
 
 	watch(
@@ -137,7 +132,7 @@ function useComputedValues() {
 			if (!isEqual(internalValue.value, newVal)) {
 				internalValue.value = newVal;
 			}
-		}
+		},
 	);
 
 	return { internalValue, isEdited, defaultValue };
@@ -152,7 +147,7 @@ function useComputedValues() {
 
 <template>
 	<div class="field" :class="[field.meta?.width || 'full', { invalid: validationError }]">
-		<v-menu v-if="field.hideLabel !== true" placement="bottom-start" show-arrow>
+		<v-menu v-if="field.hideLabel !== true" placement="bottom-start" show-arrow arrow-placement="start">
 			<template #activator="{ toggle, active }">
 				<form-field-label
 					:field="field"
@@ -176,6 +171,7 @@ function useComputedValues() {
 				:model-value="internalValue"
 				:initial-value="initialValue"
 				:restricted="isDisabled"
+				:disabled-options="disabledMenuOptions"
 				@update:model-value="emitValue($event)"
 				@unset="$emit('unset', $event)"
 				@edit-raw="showRaw = true"
@@ -210,7 +206,7 @@ function useComputedValues() {
 			@set-raw-value="onRawValueSubmit"
 		/>
 
-		<small v-if="field.meta && field.meta.note" v-md="field.meta.note" class="type-note" />
+		<small v-if="field.meta && field.meta.note" v-md="{ value: field.meta.note, target: '_blank' }" class="type-note" />
 
 		<small v-if="validationError" class="validation-error selectable">
 			<template v-if="field.meta?.validation_message">
@@ -234,10 +230,10 @@ function useComputedValues() {
 	margin-top: 4px;
 
 	:deep(a) {
-		color: var(--primary);
+		color: var(--theme--primary);
 
 		&:hover {
-			color: var(--primary-125);
+			color: var(--theme--primary-accent);
 		}
 	}
 }
@@ -246,7 +242,7 @@ function useComputedValues() {
 	margin: -12px;
 	padding: 12px;
 	background-color: var(--danger-alt);
-	border-radius: var(--border-radius);
+	border-radius: var(--theme--border-radius);
 	transition: var(--medium) var(--transition);
 	transition-property: background-color, padding, margin;
 }
@@ -255,7 +251,7 @@ function useComputedValues() {
 	display: flex;
 	align-items: center;
 	margin-top: 4px;
-	color: var(--danger);
+	color: var(--theme--danger);
 	font-style: italic;
 }
 

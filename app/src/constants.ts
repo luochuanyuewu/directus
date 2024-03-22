@@ -30,6 +30,7 @@ export const DIRECTUS_LOGO = `
 export const COLLECTIONS_DENY_LIST = [
 	'directus_activity',
 	'directus_collections',
+	'directus_extensions',
 	'directus_fields',
 	'directus_migrations',
 	'directus_relations',
@@ -108,7 +109,7 @@ export const FIELD_TYPES_SELECT: Array<{ value: Type; text: string } | { divider
 	},
 	{ divider: true },
 	{
-		text: '$t:geometry',
+		text: '$t:geometry.All',
 		value: 'geometry',
 	},
 	{ divider: true },

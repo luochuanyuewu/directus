@@ -14,7 +14,7 @@ const props = withDefaults(
 	}>(),
 	{
 		use24: true,
-	}
+	},
 );
 
 const emit = defineEmits<{
@@ -30,7 +30,7 @@ const { displayValue, isValidValue } = useDisplayValue();
 function useDisplayValue() {
 	const displayValue = ref<string | null>(null);
 
-	const isValidValue = computed(() => isValid(parseValue(props.value!)));
+	const isValidValue = computed(() => (props.value ? isValid(parseValue(props.value)) : false));
 
 	watch(() => props.value, setDisplayValue, { immediate: true });
 
@@ -111,14 +111,14 @@ function unsetValue(e: any) {
 	&.today-icon {
 		&:hover,
 		&.active {
-			--v-icon-color: var(--primary);
+			--v-icon-color: var(--theme--primary);
 		}
 	}
 
 	&.clear-icon {
 		&:hover,
 		&.active {
-			--v-icon-color: var(--danger);
+			--v-icon-color: var(--theme--danger);
 		}
 	}
 }

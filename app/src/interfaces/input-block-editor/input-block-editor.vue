@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import api, { addTokenToURL } from '@/api';
+import api from '@/api';
 import { useCollectionsStore } from '@/stores/collections';
 import { unexpectedError } from '@/utils/unexpected-error';
 import EditorJS from '@editorjs/editorjs';
@@ -21,13 +21,11 @@ const props = withDefaults(
 		font?: 'sans-serif' | 'monospace' | 'serif';
 	}>(),
 	{
-		disabled: false,
-		autofocus: false,
 		value: null,
 		bordered: true,
 		tools: () => ['header', 'nestedlist', 'code', 'image', 'paragraph', 'checklist', 'quote', 'underline'],
 		font: 'sans-serif',
-	}
+	},
 );
 
 const emit = defineEmits<{ input: [value: EditorJS.OutputData | null] }>();
@@ -48,14 +46,13 @@ const haveValuesChanged = ref(false);
 
 const tools = getTools(
 	{
-		addTokenToURL,
 		baseURL: api.defaults.baseURL,
 		setFileHandler,
 		setCurrentPreview,
 		getUploadFieldElement: () => uploaderComponentElement,
 	},
 	props.tools,
-	haveFilesAccess
+	haveFilesAccess,
 );
 
 onMounted(async () => {
@@ -108,10 +105,10 @@ watch(
 			} else {
 				editorjsRef.value.clear();
 			}
-		} catch (err: any) {
-			unexpectedError(err);
+		} catch (error) {
+			unexpectedError(error);
 		}
-	}
+	},
 );
 
 async function emitValue(context: EditorJS.API) {
@@ -130,8 +127,8 @@ async function emitValue(context: EditorJS.API) {
 		if (isEqual(result.blocks, props.value?.blocks)) return;
 
 		emit('input', result);
-	} catch (err: any) {
-		unexpectedError(err);
+	} catch (error) {
+		unexpectedError(error);
 	}
 }
 
@@ -155,7 +152,7 @@ function sanitizeValue(value: any): EditorJS.OutputData | null {
 			:model-value="fileHandler !== null"
 			icon="image"
 			:title="t('upload_from_device')"
-			:cancelable="true"
+			cancelable
 			@update:model-value="unsetFileHandler"
 			@cancel="unsetFileHandler"
 		>
@@ -193,37 +190,37 @@ function sanitizeValue(value: any): EditorJS.OutputData | null {
 }
 
 .disabled {
-	color: var(--foreground-subdued);
-	background-color: var(--background-subdued);
-	border-color: var(--border-normal);
+	color: var(--theme--form--field--input--foreground-subdued);
+	background-color: var(--theme--form--field--input--background-subdued);
+	border-color: var(--theme--form--field--input--border-color);
 	pointer-events: none;
 }
 
 .bordered {
-	padding: var(--input-padding) 4px var(--input-padding) calc(var(--input-padding) + 8px) !important;
-	background-color: var(--background-page);
-	border: var(--border-width) solid var(--border-normal);
-	border-radius: var(--border-radius);
+	padding: var(--theme--form--field--input--padding) max(32px, calc(var(--theme--form--field--input--padding) + 16px));
+	background-color: var(--theme--background);
+	border: var(--theme--border-width) solid var(--theme--form--field--input--border-color);
+	border-radius: var(--theme--border-radius);
 
 	&:hover {
-		border-color: var(--border-normal-alt);
+		border-color: var(--theme--form--field--input--border-color-hover);
 	}
 
 	&:focus-within {
-		border-color: var(--primary);
+		border-color: var(--theme--form--field--input--border-color-focus);
 	}
 }
 
 .monospace {
-	font-family: var(--family-monospace);
+	font-family: var(--theme--fonts--monospace--font-family);
 }
 
 .serif {
-	font-family: var(--family-serif);
+	font-family: var(--theme--fonts--serif--font-family);
 }
 
 .sans-serif {
-	font-family: var(--family-sans-serif);
+	font-family: var(--theme--fonts--sans--font-family);
 }
 
 .uploader-drawer-content {
@@ -233,9 +230,9 @@ function sanitizeValue(value: any): EditorJS.OutputData | null {
 }
 
 .uploader-preview-image {
-	margin-bottom: var(--form-vertical-gap);
-	background-color: var(--background-normal);
-	border-radius: var(--border-radius);
+	margin-bottom: var(--theme--form--row-gap);
+	background-color: var(--theme--background-normal);
+	border-radius: var(--theme--border-radius);
 }
 
 .uploader-preview-image img {

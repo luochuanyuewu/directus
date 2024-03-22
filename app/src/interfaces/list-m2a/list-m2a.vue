@@ -35,7 +35,7 @@ const props = withDefaults(
 		enableSelect: true,
 		limit: 15,
 		allowDuplicates: false,
-	}
+	},
 );
 
 const emit = defineEmits(['input']);
@@ -74,7 +74,7 @@ const fields = computed(() => {
 	for (const collection of allowedCollections.value) {
 		const displayFields: string[] = adjustFieldsForDisplays(
 			getFieldsFromTemplate(templates.value[collection.collection]),
-			collection.collection
+			collection.collection,
 		).map((field) => `${relationInfo.value?.junctionField.field}:${collection.collection}.${field}`);
 
 		fields.push(...addRelatedPrimaryKeyToFields(collection.collection, displayFields));
@@ -237,7 +237,7 @@ function hasAllowedCollection(item: DisplayItem) {
 	if (!info) return false;
 	return (
 		allowedCollections.value.findIndex(
-			(coll) => relationInfo && coll.collection === item[info.collectionField.field]
+			(coll) => relationInfo && coll.collection === item[info.collectionField.field],
 		) !== -1
 	);
 }
@@ -293,11 +293,14 @@ const customFilter = computed(() => {
 
 	const junctionField = info.junctionField.field;
 
-	const selectedPrimaryKeys = selected.value.reduce((acc, item) => {
-		const relatedPKField = info.relationPrimaryKeyFields[item[info.collectionField.field]].field;
-		if (item[info.collectionField.field] === selectingFrom.value) acc.push(item[junctionField][relatedPKField]);
-		return acc;
-	}, [] as (string | number)[]);
+	const selectedPrimaryKeys = selected.value.reduce(
+		(acc, item) => {
+			const relatedPKField = info.relationPrimaryKeyFields[item[info.collectionField.field]].field;
+			if (item[info.collectionField.field] === selectingFrom.value) acc.push(item[junctionField][relatedPKField]);
+			return acc;
+		},
+		[] as (string | number)[],
+	);
 
 	if (selectedPrimaryKeys.length > 0) {
 		filter._and.push({
@@ -328,7 +331,7 @@ const allowDrag = computed(
 		totalItemCount.value <= limit.value &&
 		relationInfo.value?.sortField !== undefined &&
 		!props.disabled &&
-		updateAllowed.value
+		updateAllowed.value,
 );
 </script>
 
@@ -348,11 +351,11 @@ const allowDrag = computed(
 			<v-notice v-if="displayItems.length === 0">{{ t('no_items') }}</v-notice>
 
 			<draggable
-				:force-fallback="true"
 				:model-value="displayItems"
 				item-key="$index"
 				:set-data="hideDragImage"
 				:disabled="!allowDrag"
+				v-bind="{ 'force-fallback': true }"
 				@update:model-value="sortItems"
 			>
 				<template #item="{ element }">
@@ -421,7 +424,7 @@ const allowDrag = computed(
 
 			<v-menu v-if="enableSelect && selectAllowed" :disabled="disabled" show-arrow>
 				<template #activator="{ toggle }">
-					<v-button class="existing" :disabled="disabled" @click="toggle">
+					<v-button :disabled="disabled" @click="toggle">
 						{{ t('add_existing') }}
 						<v-icon name="arrow_drop_down" right />
 					</v-button>
@@ -478,7 +481,7 @@ const allowDrag = computed(
 
 .v-list-item {
 	.collection {
-		color: var(--primary);
+		color: var(--theme--primary);
 		white-space: nowrap;
 		margin-right: 1ch;
 	}
@@ -494,7 +497,7 @@ const allowDrag = computed(
 		}
 
 		.collection {
-			color: var(--danger);
+			color: var(--theme--danger);
 		}
 	}
 }
@@ -513,10 +516,6 @@ const allowDrag = computed(
 	}
 }
 
-.existing {
-	margin-left: 8px;
-}
-
 .drag-handle {
 	cursor: grab;
 }
@@ -525,24 +524,24 @@ const allowDrag = computed(
 	cursor: default;
 
 	.invalid-icon {
-		--v-icon-color: var(--danger);
+		--v-icon-color: var(--theme--danger);
 	}
 }
 
 .clear-icon {
-	--v-icon-color: var(--foreground-subdued);
-	--v-icon-color-hover: var(--danger);
+	--v-icon-color: var(--theme--form--field--input--foreground-subdued);
+	--v-icon-color-hover: var(--theme--danger);
 
 	margin-right: 8px;
-	color: var(--foreground-subdued);
+	color: var(--theme--form--field--input--foreground-subdued);
 	transition: color var(--fast) var(--transition);
 
 	&:hover {
-		color: var(--danger);
+		color: var(--theme--danger);
 	}
 }
 
 .launch-icon {
-	color: var(--foreground-subdued);
+	color: var(--theme--form--field--input--foreground-subdued);
 }
 </style>

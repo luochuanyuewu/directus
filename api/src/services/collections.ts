@@ -1,3 +1,5 @@
+import { useEnv } from '@directus/env';
+import { ForbiddenError, InvalidPayloadError } from '@directus/errors';
 import type { SchemaInspector, Table } from '@directus/schema';
 import { createInspector } from '@directus/schema';
 import type { Accountability, FieldMeta, RawField, SchemaOverview } from '@directus/types';
@@ -10,27 +12,19 @@ import { ALIAS_TYPES } from '../constants.js';
 import type { Helpers } from '../database/helpers/index.js';
 import { getHelpers } from '../database/helpers/index.js';
 import getDatabase, { getSchemaInspector } from '../database/index.js';
-import { systemCollectionRows } from '../database/system-data/collections/index.js';
 import emitter from '../emitter.js';
-import env from '../env.js';
-import { ForbiddenError, InvalidPayloadError } from '../errors/index.js';
-import { FieldsService } from '../services/fields.js';
-import { ItemsService } from '../services/items.js';
-import type {
-	AbstractServiceOptions,
-	ActionEventParams,
-	Collection,
-	CollectionMeta,
-	MutationOptions,
-} from '../types/index.js';
+import type { AbstractServiceOptions, ActionEventParams, Collection, MutationOptions } from '../types/index.js';
 import { getSchema } from '../utils/get-schema.js';
 import { shouldClearCache } from '../utils/should-clear-cache.js';
+import { FieldsService } from './fields.js';
+import { ItemsService } from './items.js';
+import { systemCollectionRows, type BaseCollectionMeta } from '@directus/system-data';
 
 export type RawCollection = {
 	collection: string;
 	fields?: RawField[];
 	schema?: Partial<Table> | null;
-	meta?: Partial<CollectionMeta> | null;
+	meta?: Partial<BaseCollectionMeta> | null;
 };
 
 export class CollectionsService {
@@ -156,14 +150,14 @@ export class CollectionsService {
 					if (sortedFieldPayloads.length < fieldPayloads.length) {
 						const fieldsWithGroups = groupBy(
 							fieldPayloads.filter((field) => field?.group),
-							(field) => field?.group
+							(field) => field?.group,
 						);
 
 						// The sort order is restarted from 1 for fields in each group and appended to sortedFieldPayloads.
 						// Lodash merge is used so that the "sort" can be overridden if defined.
 						for (const [_group, fields] of Object.entries(fieldsWithGroups)) {
 							sortedFieldPayloads = sortedFieldPayloads.concat(
-								fields.map((field, index) => merge({ sort: index + 1 }, field))
+								fields.map((field, index) => merge({ sort: index + 1 }, field)),
 							);
 						}
 					}
@@ -190,7 +184,7 @@ export class CollectionsService {
 						{
 							bypassEmitAction: (params) =>
 								opts?.bypassEmitAction ? opts.bypassEmitAction(params) : nestedActionEvents.push(params),
-						}
+						},
 					);
 				}
 
@@ -272,6 +266,8 @@ export class CollectionsService {
 	 * Read all collections. Currently doesn't support any query.
 	 */
 	async readByQuery(): Promise<Collection[]> {
+		const env = useEnv();
+
 		const collectionItemsService = new ItemsService('directus_collections', {
 			knex: this.knex,
 			schema: this.schema,
@@ -282,7 +278,7 @@ export class CollectionsService {
 
 		let meta = (await collectionItemsService.readByQuery({
 			limit: -1,
-		})) as CollectionMeta[];
+		})) as BaseCollectionMeta[];
 
 		meta.push(...systemCollectionRows);
 
@@ -292,7 +288,7 @@ export class CollectionsService {
 					...meta,
 					[item.collection]: item.group,
 				}),
-				{}
+				{},
 			);
 
 			let collectionsYouHavePermissionToRead: string[] = this.accountability
@@ -343,7 +339,9 @@ export class CollectionsService {
 		}
 
 		if (env['DB_EXCLUDE_TABLES']) {
-			return collections.filter((collection) => env['DB_EXCLUDE_TABLES'].includes(collection.collection) === false);
+			return collections.filter(
+				(collection) => (env['DB_EXCLUDE_TABLES'] as string[]).includes(collection.collection) === false,
+			);
 		}
 
 		return collections;
@@ -426,7 +424,7 @@ export class CollectionsService {
 						...opts,
 						bypassEmitAction: (params) =>
 							opts?.bypassEmitAction ? opts.bypassEmitAction(params) : nestedActionEvents.push(params),
-					}
+					},
 				);
 			}
 
@@ -619,7 +617,7 @@ export class CollectionsService {
 					if (revisionsToDelete.length > 0) {
 						const chunks = chunk(
 							revisionsToDelete.map((record) => record.id),
-							10000
+							10000,
 						);
 
 						for (const keys of chunks) {

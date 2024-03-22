@@ -1,11 +1,10 @@
-import { isDirectusError } from '@directus/errors';
+import { ErrorCode, isDirectusError } from '@directus/errors';
 import express from 'express';
-import { ErrorCode } from '../errors/index.js';
 import { respond } from '../middleware/respond.js';
 import useCollection from '../middleware/use-collection.js';
 import { validateBatch } from '../middleware/validate-batch.js';
 import { MetaService } from '../services/meta.js';
-import { PermissionsService } from '../services/permissions.js';
+import { PermissionsService } from '../services/permissions/index.js';
 import type { PrimaryKey } from '../types/index.js';
 import asyncHandler from '../utils/async-handler.js';
 import { sanitizeQuery } from '../utils/sanitize-query.js';
@@ -50,7 +49,7 @@ router.post(
 
 		return next();
 	}),
-	respond
+	respond,
 );
 
 const readHandler = asyncHandler(async (req, res, next) => {
@@ -102,7 +101,7 @@ router.get(
 		res.locals['payload'] = { data: record };
 		return next();
 	}),
-	respond
+	respond,
 );
 
 router.patch(
@@ -138,7 +137,7 @@ router.patch(
 
 		return next();
 	}),
-	respond
+	respond,
 );
 
 router.patch(
@@ -164,7 +163,7 @@ router.patch(
 
 		return next();
 	}),
-	respond
+	respond,
 );
 
 router.delete(
@@ -187,7 +186,7 @@ router.delete(
 
 		return next();
 	}),
-	respond
+	respond,
 );
 
 router.delete(
@@ -202,7 +201,26 @@ router.delete(
 
 		return next();
 	}),
-	respond
+	respond,
+);
+
+router.get(
+	'/me/:collection/:pk?',
+	asyncHandler(async (req, res, next) => {
+		const { collection, pk } = req.params;
+
+		const service = new PermissionsService({
+			accountability: req.accountability,
+			schema: req.schema,
+		});
+
+		const itemPermissions = await service.getItemPermissions(collection!, pk);
+
+		res.locals['payload'] = { data: itemPermissions };
+
+		return next();
+	}),
+	respond,
 );
 
 export default router;

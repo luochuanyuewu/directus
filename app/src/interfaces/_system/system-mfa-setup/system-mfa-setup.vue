@@ -8,6 +8,7 @@ import { useI18n } from 'vue-i18n';
 const props = defineProps<{
 	value: string | null;
 	primaryKey?: string;
+	disabled?: boolean;
 }>();
 
 const { t } = useI18n();
@@ -40,7 +41,7 @@ watch(
 	() => {
 		tfaEnabled.value = !!props.value;
 	},
-	{ immediate: true }
+	{ immediate: true },
 );
 
 watch(
@@ -50,7 +51,7 @@ watch(
 			await nextTick();
 			(inputOTP.value.$el as HTMLElement).querySelector('input')!.focus();
 		}
-	}
+	},
 );
 
 async function enable() {
@@ -88,7 +89,7 @@ function cancelAndClose() {
 
 <template>
 	<div>
-		<v-checkbox block :model-value="tfaEnabled" :disabled="!isCurrentUser && !tfaEnabled" @click="toggle">
+		<v-checkbox block :model-value="tfaEnabled" :disabled="disabled || (!isCurrentUser && !tfaEnabled)" @click="toggle">
 			{{ tfaEnabled ? t('enabled') : t('disabled') }}
 			<div class="spacer" />
 			<template #append>
@@ -174,10 +175,10 @@ function cancelAndClose() {
 
 <style lang="scss" scoped>
 .checkbox-icon {
-	--v-icon-color: var(--foreground-subdued);
+	--v-icon-color: var(--theme--form--field--input--foreground-subdued);
 
 	&.enabled {
-		--v-icon-color: var(--primary);
+		--v-icon-color: var(--theme--primary);
 	}
 }
 
@@ -193,8 +194,8 @@ function cancelAndClose() {
 .secret {
 	display: block;
 	margin: 0 auto 16px;
-	color: var(--foreground-subdued);
-	font-family: var(--family-monospace);
+	color: var(--theme--form--field--input--foreground-subdued);
+	font-family: var(--theme--fonts--monospace--font-family);
 	letter-spacing: 2.6px;
 	text-align: center;
 }

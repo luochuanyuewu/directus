@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { isAllowed } from '@/utils/is-allowed';
+import { useItemPermissions } from '@/composables/use-permissions';
 import { Share } from '@directus/types';
 import { format } from 'date-fns';
 import { computed } from 'vue';
@@ -18,13 +18,7 @@ defineEmits<{
 
 const { t } = useI18n();
 
-const editAllowed = computed(() => {
-	return isAllowed('directus_shares', 'update', props.share);
-});
-
-const deleteAllowed = computed(() => {
-	return isAllowed('directus_shares', 'delete', props.share);
-});
+const { updateAllowed, deleteAllowed } = useItemPermissions('directus_shares', props.share.id, false);
 
 const usesLeft = computed(() => {
 	if (props.share.max_uses === null) return null;
@@ -71,8 +65,8 @@ const formattedTime = computed(() => {
 							<v-list-item-icon><v-icon name="send" /></v-list-item-icon>
 							<v-list-item-content>{{ t('share_send_link') }}</v-list-item-content>
 						</v-list-item>
-						<v-divider v-if="deleteAllowed && editAllowed" />
-						<v-list-item v-if="editAllowed" clickable @click="$emit('edit')">
+						<v-divider v-if="deleteAllowed || updateAllowed" />
+						<v-list-item v-if="updateAllowed" clickable @click="$emit('edit')">
 							<v-list-item-icon><v-icon name="edit" /></v-list-item-icon>
 							<v-list-item-content>{{ t('edit') }}</v-list-item-content>
 						</v-list-item>
@@ -103,12 +97,12 @@ const formattedTime = computed(() => {
 .item {
 	margin-bottom: 8px;
 	padding: 8px;
-	background-color: var(--background-page);
-	border-radius: var(--border-radius);
+	background-color: var(--theme--background);
+	border-radius: var(--theme--border-radius);
 }
 
 .item-date {
-	color: var(--foreground-subdued);
+	color: var(--theme--foreground-subdued);
 	font-size: 12px;
 }
 
@@ -119,15 +113,15 @@ const formattedTime = computed(() => {
 }
 
 .v-list-item.danger {
-	--v-list-item-color: var(--danger);
-	--v-list-item-color-hover: var(--danger);
-	--v-list-item-icon-color: var(--danger);
+	--v-list-item-color: var(--theme--danger);
+	--v-list-item-color-hover: var(--theme--danger);
+	--v-list-item-icon-color: var(--theme--danger);
 }
 
 .item-info {
 	display: flex;
 	align-items: center;
-	color: var(--foreground-subdued);
+	color: var(--theme--foreground-subdued);
 }
 
 .share-uses {
@@ -135,7 +129,7 @@ const formattedTime = computed(() => {
 	font-size: 12px;
 
 	&.no-left {
-		color: var(--danger);
+		color: var(--theme--danger);
 	}
 }
 
@@ -146,7 +140,7 @@ const formattedTime = computed(() => {
 	text-transform: uppercase;
 
 	&.expired {
-		color: var(--warning);
+		color: var(--theme--warning);
 	}
 
 	&.upcoming {
@@ -157,7 +151,7 @@ const formattedTime = computed(() => {
 .header-right {
 	position: relative;
 	flex-basis: 24px;
-	color: var(--foreground-subdued);
+	color: var(--theme--foreground-subdued);
 
 	.more {
 		cursor: pointer;
@@ -165,7 +159,7 @@ const formattedTime = computed(() => {
 		transition: all var(--slow) var(--transition);
 
 		&:hover {
-			color: var(--foreground-normal);
+			color: var(--theme--foreground);
 		}
 
 		&.active {

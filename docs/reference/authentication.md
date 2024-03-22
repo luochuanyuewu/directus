@@ -12,23 +12,22 @@ pageClass: page-reference
 
 ## Access Tokens
 
-There are two types of tokens that can be used to authenticate within Directus.
+There are three types of tokens that can be used to authenticate within Directus.
 
 **Temporary Token (JWT)** are returned by the [login](#login) endpoint/mutation. These tokens have a relatively short
-expiration time, and are thus the most secure option to use. The tokens are returned with a `refresh_token` that can be
+expiration time, and are thus the most secure option to use. The tokens are returned with a refresh token that can be
 used to retrieve a new access token via the [refresh](#refresh) endpoint/mutation.
 
+**Session Token (JWT)** can also be returned by the [login](#login) endpoint/mutation.\
+Session tokens combine both a refresh token and access token in a single cookie. These tokens should not have a short expiration
+time like the Temporary Tokens as you cannot refresh these after they have expired.
+
 **Static Tokens** can be set for each platform user, and never expire. They are less secure, but quite useful for
-server-to-server communication. They are saved as plain-text within `directus_users.token`.
+server-to-server communication. They are saved as plain-text within `directus_users.token`. Static Tokens are created in
+user settings inside of the Directus Data Studio User Module, or by updating the user's `token` value via API.
 
-Once you have your access token, there are two ways to pass it to the API, via the `access_token` query parameter, or in
-the request's Authorization Header.
-
-### Query Parameter
-
-```
-?access_token=<token>
-```
+Once you have your access token, there are three ways to pass it to the API: in the request's `Authorization` Header, as
+session cookie or via the `access_token` query parameter.
 
 ### Authorization Header
 
@@ -36,13 +35,31 @@ the request's Authorization Header.
 Authorization: Bearer <token>
 ```
 
+### Session Cookie
+
+```
+Cookie: directus_session_token=<token>
+```
+
+### Query Parameter
+
+```
+?access_token=<token>
+```
+
+::: warning
+
+The query parameter option is not recommended in production setups as the parameter can get logged by various systems.
+
+:::
+
 ## Login
 
 Retrieve a temporary access token and refresh token.
 
 ### Request
 
-<SnippetToggler :choices="['REST', 'GraphQL', 'SDK']" label="API">
+<SnippetToggler :choices="['REST', 'GraphQL', 'SDK']" group="api">
 <template #rest>
 
 `POST /auth/login`
@@ -76,7 +93,7 @@ mutation {
 ```js
 import { createDirectus, authentication, rest, login } from '@directus/sdk';
 
-const client = createDirectus('directus_project_url').with(authentication()).with(rest());
+const client = createDirectus('directus_project_url').with(authentication('json')).with(rest());
 
 // login using the authentication composable
 const result = await client.login(email, password);
@@ -100,20 +117,21 @@ Password of the user.
 The user's one-time-password (if MFA is enabled).
 
 `mode`\
-Whether to retrieve the refresh token in the JSON response, or in a `httpOnly` `secure` cookie. One of `json`, `cookie`.
+Whether to retrieve the refresh token in the JSON response, or in a `httpOnly` cookie. One of `json`, `cookie` or `session`.
 Defaults to `json`.
 
 ### Response
 
 `access_token` **string**\
-Temporary access token to be used in follow-up requests.
+Temporary access token to be used in follow-up requests. Note: if you used `session` as the mode in the request, the access
+token won't be returned in the JSON.
 
 `expires` **integer**\
 How long before the access token will expire. Value is in milliseconds.
 
 `refresh_token` **string**\
 The token that can be used to retrieve a new access token through [`/auth/refresh`](#refresh). Note: if you used `cookie`
-as the mode in the request, the refresh token won't be returned in the JSON.
+or `session` as the mode in the request, the refresh token won't be returned in the JSON.
 
 ::: tip Expiry time
 
@@ -124,7 +142,7 @@ The token's expiration time can be configured through
 
 ### Example
 
-<SnippetToggler :choices="['REST', 'GraphQL', 'SDK']" label="API">
+<SnippetToggler :choices="['REST', 'GraphQL', 'SDK']" group="api">
 <template #rest>
 
 `POST /auth/login`
@@ -176,7 +194,7 @@ Retrieve a new access token using a refresh token.
 
 ### Request
 
-<SnippetToggler :choices="['REST', 'GraphQL', 'SDK']" label="API">
+<SnippetToggler :choices="['REST', 'GraphQL', 'SDK']" group="api">
 <template #rest>
 
 `POST /auth/refresh`
@@ -195,7 +213,7 @@ Retrieve a new access token using a refresh token.
 
 ```graphql
 mutation {
-	auth_refresh(refresh_token: "abc...def", mode: json) {
+	auth_refresh(refresh_token: "refresh_token", mode: refresh_mode) {
 		access_token
 		refresh_token
 	}
@@ -230,23 +248,25 @@ The refresh token to use. If you have the refresh token in a cookie through [`/a
 it here.
 
 `mode`\
-Whether to retrieve the refresh token in the JSON response, or in a `httpOnly` `secure` cookie. One of `json`, `cookie`.
+Whether to submit and retrieve the refresh token in the JSON response, or in a `httpOnly` cookie. One of `json`, `cookie`
+or `session`.
 
 ### Response
 
 `access_token` **string**\
-Temporary access token to be used in follow-up requests.
+Temporary access token to be used in follow-up requests. Note: if you used `session` as the mode in the request, the access
+token won't be returned in the JSON.
 
 `expires` **integer**\
 How long before the access token will expire. Value is in milliseconds.
 
 `refresh_token` **string**\
 The token that can be used to retrieve a new access token through [`/auth/refresh`](#refresh). Note: if you used `cookie`
-as the mode in the request, the refresh token won't be returned in the JSON.
+or `session` as the mode in the request, the refresh token won't be returned in the JSON.
 
 ### Example
 
-<SnippetToggler :choices="['REST', 'GraphQL', 'SDK']" label="API">
+<SnippetToggler :choices="['REST', 'GraphQL', 'SDK']" group="api">
 <template #rest>
 
 `POST /auth/refresh`
@@ -299,7 +319,7 @@ Invalidate the refresh token thus destroying the user's session.
 
 ### Request
 
-<SnippetToggler :choices="['REST', 'GraphQL', 'SDK']" label="API">
+<SnippetToggler :choices="['REST', 'GraphQL', 'SDK']" group="api">
 <template #rest>
 
 `POST /auth/logout`
@@ -345,16 +365,20 @@ const result = await client.request(logout(refresh_token));
 The refresh token to invalidate. If you have the refresh token in a cookie through [`/auth/login`](#login), you don't have
 to submit it here.
 
+`mode`\
+Whether the refresh token is submitted in the JSON response, or in a `httpOnly` cookie. One of `json`, `cookie` or `session`.
+
 ### Example
 
-<SnippetToggler :choices="['REST', 'GraphQL', 'SDK']" label="API">
+<SnippetToggler :choices="['REST', 'GraphQL', 'SDK']" group="api">
 <template #rest>
 
 `POST /auth/logout`
 
 ```json
 {
-	"refresh_token": "gmPd...8wuB"
+	"refresh_token": "gmPd...8wuB",
+	"mode": "json"
 }
 ```
 
@@ -365,7 +389,7 @@ to submit it here.
 
 ```graphql
 mutation {
-	auth_logout(refresh_token: "gmPd...8wuB")
+	auth_logout(refresh_token: "gmPd...8wuB", mode: "json")
 }
 ```
 
@@ -375,7 +399,7 @@ mutation {
 ```js
 import { createDirectus, authentication, rest, logout } from '@directus/sdk';
 
-const client = createDirectus('https://directus.example.com').with(authentication()).with(rest());
+const client = createDirectus('https://directus.example.com').with(authentication('json')).with(rest());
 
 // logout using the authentication composable
 const result = await client.logout();
@@ -393,7 +417,7 @@ Request a password reset email to be sent to the given user.
 
 ### Request
 
-<SnippetToggler :choices="['REST', 'GraphQL', 'SDK']" label="API">
+<SnippetToggler :choices="['REST', 'GraphQL', 'SDK']" group="api">
 <template #rest>
 
 `POST /auth/password/request`
@@ -441,7 +465,7 @@ Provide a custom reset url which the link in the email will lead to. The reset t
 
 ### Example
 
-<SnippetToggler :choices="['REST', 'GraphQL', 'SDK']" label="API">
+<SnippetToggler :choices="['REST', 'GraphQL', 'SDK']" group="api">
 <template #rest>
 
 `POST /auth/password/request`
@@ -484,7 +508,7 @@ this endpoint to allow the user to reset their password.
 
 ### Request
 
-<SnippetToggler :choices="['REST', 'GraphQL', 'SDK']" label="API">
+<SnippetToggler :choices="['REST', 'GraphQL', 'SDK']" group="api">
 <template #rest>
 
 `POST /auth/password/reset`
@@ -531,7 +555,7 @@ New password for the user.
 
 ### Example
 
-<SnippetToggler :choices="['REST', 'GraphQL', 'SDK']" label="API">
+<SnippetToggler :choices="['REST', 'GraphQL', 'SDK']" group="api">
 <template #rest>
 
 `POST /auth/password/reset`
@@ -581,7 +605,7 @@ To learn more about setting up auth providers, see
 
 ### Request
 
-<SnippetToggler :choices="['REST', 'SDK']" label="API">
+<SnippetToggler :choices="['REST', 'SDK']" group="api">
 <template #rest>
 
 `GET /auth`
@@ -632,7 +656,7 @@ Whether or not the default authentication provider is disabled.
 
 ### Example
 
-<SnippetToggler :choices="['REST', 'SDK']" label="API">
+<SnippetToggler :choices="['REST', 'SDK']" group="api">
 <template #rest>
 
 `GET /auth`

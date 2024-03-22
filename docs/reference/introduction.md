@@ -27,7 +27,7 @@ Which one you choose is ultimately up to you.
 ## Authentication
 
 By default, all data in the system is off-limits for unauthenticated users. To gain access to protected data, you must
-[include an access token with every request](/reference/authentication#access-tokens), or
+[include an access token or session cookie with every request](/reference/authentication#access-tokens), or
 [configure permissions for the public role](/getting-started/quickstart#_6-set-role-public-permissions).
 
 Useful references:
@@ -280,7 +280,7 @@ Below are the global error codes used within Directus, and what they mean.
 | `REQUESTS_EXCEEDED`      | 429         | Hit the rate limit                                              |
 | `ROUTE_NOT_FOUND`        | 404         | Endpoint does not exist                                         |
 | `SERVICE_UNAVAILABLE`    | 503         | Could not use external service                                  |
-| `UNPROCESSABLE_ENTITY`   | 422         | You tried doing something illegal                               |
+| `UNPROCESSABLE_CONTENT`  | 422         | You tried doing something illegal                               |
 
 ::: warning Security
 

@@ -6,28 +6,29 @@ import { computed, onMounted, onUnmounted, ref, toRefs, watch } from 'vue';
 import FieldListItem from './field-list-item.vue';
 import { FieldTree } from './types';
 
-interface Props {
-	disabled?: boolean;
-	modelValue?: string | null;
-	nullable?: boolean;
-	collection?: string | null;
-	depth?: number;
-	placeholder?: string | null;
-	inject?: {
-		fields: Field[];
-		relations: Relation[];
-	} | null;
-}
-
-const props = withDefaults(defineProps<Props>(), {
-	disabled: false,
-	modelValue: null,
-	nullable: true,
-	collection: null,
-	depth: undefined,
-	placeholder: null,
-	inject: null,
-});
+const props = withDefaults(
+	defineProps<{
+		disabled?: boolean;
+		modelValue?: string | null;
+		nullable?: boolean;
+		collection?: string | null;
+		depth?: number;
+		placeholder?: string | null;
+		inject?: {
+			fields: Field[];
+			relations: Relation[];
+		} | null;
+	}>(),
+	{
+		disabled: false,
+		modelValue: null,
+		nullable: true,
+		collection: null,
+		depth: undefined,
+		placeholder: null,
+		inject: null,
+	},
+);
 
 const emit = defineEmits(['update:modelValue']);
 
@@ -117,7 +118,7 @@ function onSelect() {
 		for (let i = 0; i < contentEl.value.childNodes.length || !textSpan; i++) {
 			const child = contentEl.value.children[i];
 
-			if (child.classList.contains('text')) {
+			if (child?.classList.contains('text')) {
 				textSpan = child;
 			}
 		}
@@ -299,10 +300,10 @@ function setContent() {
 	display: block;
 	flex-grow: 1;
 	height: 100%;
-	padding: var(--input-padding) 0;
+	padding: var(--theme--form--field--input--padding) 0;
 	overflow: hidden;
 	font-size: 14px;
-	font-family: var(--family-monospace);
+	font-family: var(--theme--fonts--monospace--font-family);
 	white-space: nowrap;
 
 	:deep(span) {
@@ -319,9 +320,9 @@ function setContent() {
 :deep(button) {
 	margin: -1px 4px 0;
 	padding: 2px 4px 0;
-	color: var(--primary);
-	background-color: var(--primary-alt);
-	border-radius: var(--border-radius);
+	color: var(--theme--primary);
+	background-color: var(--theme--primary-background);
+	border-radius: var(--theme--border-radius);
 	transition: var(--fast) var(--transition);
 	transition-property: background-color, color;
 	user-select: none;
@@ -329,14 +330,14 @@ function setContent() {
 
 :deep(button:not(:disabled):hover) {
 	color: var(--white);
-	background-color: var(--danger);
+	background-color: var(--theme--danger);
 }
 
 .placeholder {
 	position: absolute;
 	top: 50%;
 	left: 14px;
-	color: var(--foreground-subdued);
+	color: var(--theme--foreground-subdued);
 	transform: translateY(-50%);
 	user-select: none;
 	pointer-events: none;

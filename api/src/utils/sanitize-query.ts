@@ -1,14 +1,14 @@
+import { useEnv } from '@directus/env';
 import type { Accountability, Aggregate, Filter, Query } from '@directus/types';
 import { parseFilter, parseJSON } from '@directus/utils';
 import { flatten, get, isPlainObject, merge, set } from 'lodash-es';
-import { getEnv } from '../env.js';
-import logger from '../logger.js';
+import { useLogger } from '../logger.js';
 import { Meta } from '../types/index.js';
 
 export function sanitizeQuery(rawQuery: Record<string, any>, accountability?: Accountability | null): Query {
-	const query: Query = {};
+	const env = useEnv();
 
-	const env = getEnv();
+	const query: Query = {};
 
 	const hasMaxLimit =
 		'QUERY_LIMIT_MAX' in env &&
@@ -62,6 +62,15 @@ export function sanitizeQuery(rawQuery: Record<string, any>, accountability?: Ac
 		query.search = rawQuery['search'];
 	}
 
+	if (rawQuery['version']) {
+		query.version = rawQuery['version'];
+
+		// whether or not to merge the relational results
+		query.versionRaw = Boolean(
+			'versionRaw' in rawQuery && (rawQuery['versionRaw'] === '' || rawQuery['versionRaw'] === 'true'),
+		);
+	}
+
 	if (rawQuery['export']) {
 		query.export = rawQuery['export'] as 'json' | 'csv';
 	}
@@ -101,10 +110,14 @@ function sanitizeSort(rawSort: any) {
 	if (typeof rawSort === 'string') fields = rawSort.split(',');
 	else if (Array.isArray(rawSort)) fields = rawSort as string[];
 
+	fields = fields.map((field) => field.trim());
+
 	return fields;
 }
 
 function sanitizeAggregate(rawAggregate: any): Aggregate {
+	const logger = useLogger();
+
 	let aggregate: Aggregate = rawAggregate;
 
 	if (typeof rawAggregate === 'string') {
@@ -124,6 +137,8 @@ function sanitizeAggregate(rawAggregate: any): Aggregate {
 }
 
 function sanitizeFilter(rawFilter: any, accountability: Accountability | null) {
+	const logger = useLogger();
+
 	let filters: Filter | null = rawFilter;
 
 	if (typeof rawFilter === 'string') {
@@ -167,6 +182,8 @@ function sanitizeMeta(rawMeta: any) {
 }
 
 function sanitizeDeep(deep: Record<string, any>, accountability?: Accountability | null) {
+	const logger = useLogger();
+
 	const result: Record<string, any> = {};
 
 	if (typeof deep === 'string') {
@@ -212,6 +229,8 @@ function sanitizeDeep(deep: Record<string, any>, accountability?: Accountability
 }
 
 function sanitizeAlias(rawAlias: any) {
+	const logger = useLogger();
+
 	let alias: Record<string, string> = rawAlias;
 
 	if (typeof rawAlias === 'string') {

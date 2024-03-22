@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { getCurrentLanguage } from '@/lang/get-current-language';
 import type { Translation } from '@/stores/translations';
 import { useTranslationsStore } from '@/stores/translations';
 import { fetchAll } from '@/utils/fetch-all';
@@ -10,19 +11,18 @@ import CustomTranslationsTooltip from './custom-translations-tooltip.vue';
 
 const translationPrefix = '$t:';
 
-interface Props {
-	value?: string | null;
-	autofocus?: boolean;
-	disabled?: boolean;
-	placeholder?: string | null;
-}
-
-const props = withDefaults(defineProps<Props>(), {
-	value: null,
-	autofocus: false,
-	disabled: false,
-	placeholder: null,
-});
+const props = withDefaults(
+	defineProps<{
+		value?: string | null;
+		autofocus?: boolean;
+		disabled?: boolean;
+		placeholder?: string | null;
+	}>(),
+	{
+		value: null,
+		placeholder: null,
+	},
+);
 
 const emit = defineEmits(['input']);
 
@@ -51,8 +51,8 @@ const fetchTranslationsKeys = async () => {
 		});
 
 		translationsKeys.value = response.map((t) => t.key);
-	} catch (err: any) {
-		unexpectedError(err);
+	} catch (error) {
+		unexpectedError(error);
 	} finally {
 		loading.value = false;
 	}
@@ -84,12 +84,13 @@ const localValue = computed<string | null>({
 const create = async (item: Translation) => {
 	await translationsStore.create(item);
 	await fetchTranslationsKeys();
+	setValue(`${translationPrefix}${item.key}`);
 };
 
 watch(
 	() => props.value,
 	(newVal) => setValue(newVal),
-	{ immediate: true }
+	{ immediate: true },
 );
 
 const localValueWithoutPrefix = computed(() => (localValue.value ? getKeyWithoutPrefix(localValue.value) : null));
@@ -205,6 +206,7 @@ function openNewCustomTranslationDrawer() {
 			v-model:active="isCustomTranslationDrawerOpen"
 			collection="directus_translations"
 			primary-key="+"
+			:edits="{ language: getCurrentLanguage() }"
 			@input="create"
 		/>
 	</div>
@@ -215,25 +217,25 @@ function openNewCustomTranslationDrawer() {
 	:deep(button) {
 		margin-right: auto;
 		padding: 2px 8px 0;
-		color: var(--primary);
-		background-color: var(--primary-alt);
-		border-radius: var(--border-radius);
+		color: var(--theme--primary);
+		background-color: var(--theme--primary-background);
+		border-radius: var(--theme--border-radius);
 		transition: var(--fast) var(--transition);
 		transition-property: background-color, color;
 		user-select: none;
-		font-family: var(--family-monospace);
+		font-family: var(--theme--fonts--monospace--font-family);
 	}
 
 	:deep(button:not(:disabled):hover) {
 		color: var(--white);
-		background-color: var(--danger);
+		background-color: var(--theme--danger);
 	}
 
 	.translate-icon {
 		&:hover,
 		&.active {
-			--v-icon-color-hover: var(--primary);
-			--v-icon-color: var(--primary);
+			--v-icon-color-hover: var(--theme--primary);
+			--v-icon-color: var(--theme--primary);
 		}
 	}
 }
@@ -242,7 +244,7 @@ function openNewCustomTranslationDrawer() {
 	padding: 12px 8px 6px 8px;
 
 	.search-input {
-		--input-height: 48px;
+		--input-height: 40px;
 	}
 
 	.search-icon {
@@ -266,16 +268,16 @@ function openNewCustomTranslationDrawer() {
 		flex-basis: auto;
 		flex-grow: 0;
 		flex-shrink: 1;
-		color: var(--primary);
+		color: var(--theme--primary);
 	}
 
 	&.selected {
 		--v-list-item-color-active: var(--foreground-inverted);
-		--v-list-item-background-color-active: var(--primary);
+		--v-list-item-background-color-active: var(--theme--primary);
 		--v-list-item-color-hover: var(--foreground-inverted);
-		--v-list-item-background-color-hover: var(--primary);
+		--v-list-item-background-color-hover: var(--theme--primary);
 
-		background-color: var(--primary);
+		background-color: var(--theme--primary);
 		color: var(--foreground-inverted);
 
 		.v-list-item-icon {
@@ -290,12 +292,12 @@ function openNewCustomTranslationDrawer() {
 }
 
 .new-custom-translation {
-	--v-list-item-color-hover: var(--primary-125);
+	--v-list-item-color-hover: var(--theme--primary-accent);
 
-	color: var(--primary);
+	color: var(--theme--primary);
 
 	.v-list-item-icon {
-		--v-icon-color: var(--primary);
+		--v-icon-color: var(--theme--primary);
 	}
 }
 </style>

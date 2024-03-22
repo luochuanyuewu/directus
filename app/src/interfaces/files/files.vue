@@ -32,7 +32,7 @@ const props = withDefaults(
 		enableCreate: true,
 		enableSelect: true,
 		limit: 15,
-	}
+	},
 );
 
 const emit = defineEmits<{
@@ -82,8 +82,8 @@ const templateWithDefaults = computed(() => {
 const fields = computed(() =>
 	adjustFieldsForDisplays(
 		[...getFieldsFromTemplate(templateWithDefaults.value), `${relationInfo.value?.relation.field}.filename_download`],
-		relationInfo.value?.junctionCollection.collection ?? ''
-	)
+		relationInfo.value?.junctionCollection.collection ?? '',
+	),
 );
 
 const page = ref(1);
@@ -275,7 +275,7 @@ const allowDrag = computed(
 		totalItemCount.value <= limit.value &&
 		relationInfo.value?.sortField !== undefined &&
 		!props.disabled &&
-		updateAllowed.value
+		updateAllowed.value,
 );
 </script>
 
@@ -290,15 +290,15 @@ const allowDrag = computed(
 			/>
 		</template>
 
-		<v-notice v-else-if="displayItems.length === 0">{{ t('no_items') }}</v-notice>
-
 		<v-list v-else>
+			<v-notice v-if="displayItems.length === 0">{{ t('no_items') }}</v-notice>
+
 			<draggable
-				:force-fallback="true"
 				:model-value="displayItems"
 				item-key="id"
 				handle=".drag-handle"
 				:disabled="!allowDrag"
+				v-bind="{ 'force-fallback': true }"
 				@update:model-value="sortItems($event)"
 			>
 				<template #item="{ element }">
@@ -438,13 +438,13 @@ const allowDrag = computed(
 }
 
 .deselect {
-	--v-icon-color: var(--foreground-subdued);
+	--v-icon-color: var(--theme--form--field--input--foreground-subdued);
 	margin-right: 4px;
 	transition: color var(--fast) var(--transition);
 	cursor: pointer;
 
 	&:hover {
-		--v-icon-color: var(--danger);
+		--v-icon-color: var(--theme--danger);
 	}
 }
 

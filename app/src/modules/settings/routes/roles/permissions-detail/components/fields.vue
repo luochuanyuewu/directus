@@ -1,14 +1,15 @@
 <script setup lang="ts">
 import { useFieldsStore } from '@/stores/fields';
 import { useSync } from '@directus/composables';
-import { Field, Permission, Role } from '@directus/types';
+import type { Field, Permission, Role } from '@directus/types';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import AppMinimal from './app-minimal.vue';
 
 const props = defineProps<{
 	permission: Permission;
 	role?: Role;
-	appMinimal?: Partial<Permission>;
+	appMinimal?: Permission['fields'];
 }>();
 
 const emit = defineEmits(['update:permission']);
@@ -17,14 +18,17 @@ const { t } = useI18n();
 
 const fieldsStore = useFieldsStore();
 
-const internalPermission = useSync(props, 'permission', emit);
+const permissionSync = useSync(props, 'permission', emit);
 
 const fieldsInCollection = computed(() => {
 	const fields = fieldsStore.getFieldsForCollectionSorted(props.permission.collection);
 
+	const appMinimal = new Set(props.appMinimal ?? []);
+
 	return fields.map((field: Field) => {
 		return {
 			text: field.field,
+			disabled: appMinimal.has('*') || appMinimal.has(field.field),
 			value: field.field,
 		};
 	});
@@ -32,23 +36,35 @@ const fieldsInCollection = computed(() => {
 
 const fields = computed({
 	get() {
-		if (!internalPermission.value.fields) return [];
+		const fields = new Set([...(props.appMinimal ?? []), ...(permissionSync.value.fields ?? [])]);
 
-		if (internalPermission.value.fields.includes('*')) {
-			return fieldsInCollection.value.map(({ value }: { value: string }) => value);
+		if (fields.has('*')) {
+			for (const field of fieldsInCollection.value) {
+				fields.add(field.value);
+			}
 		}
 
-		return internalPermission.value.fields;
+		return Array.from(fields);
 	},
 	set(newFields: string[] | null) {
-		if (newFields && newFields.length > 0) {
-			internalPermission.value = {
-				...internalPermission.value,
-				fields: newFields,
+		const fields: string[] = [];
+
+		const appMinimal = new Set(props.appMinimal ?? []);
+		const previousFields = new Set(permissionSync.value.fields ?? []);
+
+		for (const field of newFields ?? []) {
+			if (appMinimal.has(field) && !previousFields.has(field)) continue;
+			fields.push(field);
+		}
+
+		if (fields && fields.length > 0) {
+			permissionSync.value = {
+				...permissionSync.value,
+				fields,
 			};
 		} else {
-			internalPermission.value = {
-				...internalPermission.value,
+			permissionSync.value = {
+				...permissionSync.value,
 				fields: null,
 			};
 		}
@@ -58,7 +74,7 @@ const fields = computed({
 
 <template>
 	<div>
-		<v-notice type="info">
+		<v-notice>
 			{{
 				t('fields_for_role', {
 					role: role ? role.name : t('public_label'),
@@ -75,11 +91,7 @@ const fields = computed({
 			@input="fields = $event"
 		/>
 
-		<div v-if="appMinimal" class="app-minimal">
-			<v-divider />
-			<v-notice type="warning">{{ t('the_following_are_minimum_permissions') }}</v-notice>
-			<pre class="app-minimal-preview">{{ appMinimal }}</pre>
-		</div>
+		<app-minimal :value="appMinimal" />
 	</div>
 </template>
 
@@ -93,23 +105,6 @@ const fields = computed({
 }
 
 .checkboxes :deep(.v-checkbox .type-text) {
-	font-family: var(--family-monospace);
-}
-
-.app-minimal {
-	.v-divider {
-		margin: 24px 0;
-	}
-
-	.v-notice {
-		margin-bottom: 24px;
-	}
-
-	.app-minimal-preview {
-		padding: 16px;
-		font-family: var(--family-monospace);
-		background-color: var(--background-subdued);
-		border-radius: var(--border-radius);
-	}
+	font-family: var(--theme--fonts--monospace--font-family);
 }
 </style>

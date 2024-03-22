@@ -22,8 +22,14 @@ export type Info = {
 		project_logo: string | null;
 		project_color: string | null;
 		default_language: string | null;
+		default_appearance: 'light' | 'dark' | 'auto';
+		default_theme_light: string | null;
+		default_theme_dark: string | null;
+		theme_light_overrides: Record<string, unknown> | null;
+		theme_dark_overrides: Record<string, unknown> | null;
 		public_foreground: string | null;
-		public_background: string | null;
+		public_background: { id: string; type: string } | null;
+		public_favicon: string | null;
 		public_note: string | null;
 		custom_css: string | null;
 	};
@@ -37,6 +43,10 @@ export type Info = {
 		default: number;
 		max: number;
 	};
+	version?: string;
+	extensions?: {
+		limit: number | null;
+	};
 };
 
 export type Auth = {
@@ -47,6 +57,7 @@ export type Auth = {
 export const useServerStore = defineStore('serverStore', () => {
 	const info = reactive<Info>({
 		project: null,
+		extensions: undefined,
 		rateLimit: undefined,
 		queryLimit: undefined,
 	});
@@ -77,6 +88,8 @@ export const useServerStore = defineStore('serverStore', () => {
 
 		info.project = serverInfoResponse.data.data?.project;
 		info.queryLimit = serverInfoResponse.data.data?.queryLimit;
+		info.extensions = serverInfoResponse.data.data?.extensions;
+		info.version = serverInfoResponse.data.data?.version;
 
 		auth.providers = authResponse.data.data;
 		auth.disableDefault = authResponse.data.disableDefault;

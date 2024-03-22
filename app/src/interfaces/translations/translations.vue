@@ -2,20 +2,19 @@
 import VDivider from '@/components/v-divider.vue';
 import VForm from '@/components/v-form/v-form.vue';
 import VIcon from '@/components/v-icon/v-icon.vue';
+import { usePermissions } from '@/composables/use-permissions';
 import { useRelationM2M } from '@/composables/use-relation-m2m';
 import { DisplayItem, RelationQueryMultiple, useRelationMultiple } from '@/composables/use-relation-multiple';
-import { useRelationPermissionsM2M } from '@/composables/use-relation-permissions';
 import { useWindowSize } from '@/composables/use-window-size';
 import vTooltip from '@/directives/tooltip';
 import { useFieldsStore } from '@/stores/fields';
-import { usePermissionsStore } from '@/stores/permissions';
 import { fetchAll } from '@/utils/fetch-all';
 import { unexpectedError } from '@/utils/unexpected-error';
-import { cloneDeep, isNil } from 'lodash';
+import { getEndpoint } from '@directus/utils';
+import { isNil } from 'lodash';
 import { computed, ref, toRefs, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import LanguageSelect from './language-select.vue';
-import { getEndpoint } from '@directus/utils';
 
 const props = withDefaults(
 	defineProps<{
@@ -25,20 +24,22 @@ const props = withDefaults(
 		languageField?: string | null;
 		languageDirectionField?: string | null;
 		defaultLanguage?: string | null;
+		defaultOpenSplitView?: boolean;
 		userLanguage?: boolean;
-		value: (number | string | Record<string, any>)[] | Record<string, any>;
+		value: (number | string | Record<string, any>)[] | Record<string, any> | null;
 		autofocus?: boolean;
 		disabled?: boolean;
 	}>(),
 	{
-		languageField: () => null,
-		languageDirectionField: () => 'direction',
+		languageField: null,
+		languageDirectionField: 'direction',
 		value: () => [],
 		autofocus: false,
 		disabled: false,
-		defaultLanguage: () => null,
+		defaultLanguage: null,
+		defaultOpenSplitView: false,
 		userLanguage: false,
-	}
+	},
 );
 
 const emit = defineEmits(['input']);
@@ -55,11 +56,10 @@ const { relationInfo } = useRelationM2M(collection, field);
 const { t, locale } = useI18n();
 
 const fieldsStore = useFieldsStore();
-const permissionsStore = usePermissionsStore();
 
 const { width } = useWindowSize();
 
-const splitView = ref(false);
+const splitView = ref(props.defaultOpenSplitView);
 const firstLang = ref<string>();
 const secondLang = ref<string>();
 
@@ -67,7 +67,7 @@ watch(splitView, (splitViewEnabled) => {
 	const lang = languageOptions.value;
 
 	if (splitViewEnabled && secondLang.value === firstLang.value) {
-		secondLang.value = lang[0].value === firstLang.value ? lang[1].value : lang[0].value;
+		secondLang.value = lang[0]?.value === firstLang.value ? lang[1]?.value : lang[0]?.value;
 	}
 });
 
@@ -88,7 +88,7 @@ const { create, update, displayItems, loading, fetchedItems, getItemEdits } = us
 	value,
 	query,
 	relationInfo,
-	primaryKey
+	primaryKey,
 );
 
 const firstItem = computed(() => {
@@ -175,7 +175,7 @@ function useLanguages() {
 		if (!langField) return [];
 
 		const writableFields = fields.value.filter(
-			(field) => field.type !== 'alias' && field.meta?.hidden === false && field.meta.readonly === false
+			(field) => field.type !== 'alias' && field.meta?.hidden === false && field.meta.readonly === false,
 		);
 
 		const totalFields = writableFields.length;
@@ -218,6 +218,7 @@ function useLanguages() {
 		}
 
 		const pkField = relationInfo.value.relatedPrimaryKeyField.field;
+		const sortField = relationInfo.value.relatedCollection.meta?.sort_field;
 
 		fields.add(pkField);
 
@@ -229,9 +230,9 @@ function useLanguages() {
 				{
 					params: {
 						fields: Array.from(fields),
-						sort: props.languageField ?? pkField,
+						sort: sortField ?? props.languageField ?? pkField,
 					},
-				}
+				},
 			);
 
 			if (!firstLang.value) {
@@ -243,109 +244,57 @@ function useLanguages() {
 			if (!secondLang.value) {
 				secondLang.value = languages.value[1]?.[pkField];
 			}
-		} catch (err: any) {
-			unexpectedError(err);
+		} catch (error) {
+			unexpectedError(error);
 		} finally {
 			loading.value = false;
 		}
 	}
 }
 
-const { junctionPerms } = useRelationPermissionsM2M(relationInfo);
-
-const createAllowed = computed(() => junctionPerms.value.create);
-const updateAllowed = computed(() => junctionPerms.value.update);
-
-const firstItemNew = computed(
-	() => relationInfo.value && firstItemInitial.value?.[relationInfo.value.junctionPrimaryKeyField.field] === undefined
+const firstItemPrimaryKey = computed(
+	() => relationInfo.value && firstItemInitial.value?.[relationInfo.value.junctionPrimaryKeyField.field],
 );
 
-const secondItemNew = computed(
-	() => relationInfo.value && secondItemInitial.value?.[relationInfo.value.junctionPrimaryKeyField.field] === undefined
+const secondItemPrimaryKey = computed(
+	() => relationInfo.value && secondItemInitial.value?.[relationInfo.value.junctionPrimaryKeyField.field],
 );
 
-const firstChangesAllowed = computed(() => {
-	if (firstItemNew.value) {
-		return updateAllowed.value;
-	}
+const firstItemNew = computed(() => !!(relationInfo.value && firstItemPrimaryKey.value === undefined));
 
-	return createAllowed.value;
-});
+const secondItemNew = computed(() => !!(relationInfo.value && secondItemPrimaryKey.value === undefined));
 
-const secondChangesAllowed = computed(() => {
-	if (secondItemNew.value) {
-		return updateAllowed.value;
-	}
+const {
+	itemPermissions: { saveAllowed: firstSaveAllowed, fields: firstFields },
+} = usePermissions(
+	computed(() => relationInfo.value?.junctionCollection.collection ?? null),
+	firstItemPrimaryKey,
+	firstItemNew,
+);
 
-	return createAllowed.value;
-});
-
-const firstFields = computed(() => {
-	let fieldsWithPerms = cloneDeep(fields.value);
-	if (!relationInfo.value) return fieldsWithPerms;
-
-	const permissions = permissionsStore.getPermissionsForUser(
-		relationInfo.value.junctionCollection.collection,
-		firstItemNew.value ? 'create' : 'update'
-	);
-
-	if (!permissions) return fieldsWithPerms;
-
-	if (permissions.fields?.includes('*') === false) {
-		fieldsWithPerms = fieldsWithPerms.map((field) => {
-			if (permissions.fields?.includes(field.field) === false) {
-				field.meta = {
-					...(field.meta || {}),
-					readonly: true,
-				} as any;
-			}
-
-			return field;
-		});
-	}
-
-	return fieldsWithPerms;
-});
-
-const secondFields = computed(() => {
-	let fieldsWithPerms = cloneDeep(fields.value);
-	if (!relationInfo.value) return fieldsWithPerms;
-
-	const permissions = permissionsStore.getPermissionsForUser(
-		relationInfo.value.junctionCollection.collection,
-		secondItemNew.value ? 'create' : 'update'
-	);
-
-	if (!permissions) return fieldsWithPerms;
-
-	if (permissions.fields?.includes('*') === false) {
-		fieldsWithPerms = fieldsWithPerms.map((field) => {
-			if (permissions.fields?.includes(field.field) === false) {
-				field.meta = {
-					...(field.meta || {}),
-					readonly: true,
-				} as any;
-			}
-
-			return field;
-		});
-	}
-
-	return fieldsWithPerms;
-});
+const {
+	itemPermissions: { saveAllowed: secondSaveAllowed, fields: secondFields },
+} = usePermissions(
+	computed(() => relationInfo.value?.junctionCollection.collection ?? null),
+	secondItemPrimaryKey,
+	secondItemNew,
+);
 </script>
 
 <template>
 	<div class="translations" :class="{ split: splitViewEnabled }">
 		<div class="primary" :class="splitViewEnabled ? 'half' : 'full'">
 			<language-select v-if="showLanguageSelect" v-model="firstLang" :items="languageOptions">
-				<template #append>
+				<template #append="{ active, toggle }">
 					<v-icon
 						v-if="splitViewAvailable && !splitViewEnabled"
 						v-tooltip="t('interfaces.translations.toggle_split_view')"
 						name="flip"
 						clickable
-						@click.stop="splitView = true"
+						@click.stop="
+							if (active) toggle();
+							splitView = true;
+						"
 					/>
 				</template>
 			</language-select>
@@ -357,7 +306,7 @@ const secondFields = computed(() => {
 						? firstItemInitial?.[relationInfo?.junctionPrimaryKeyField.field]
 						: null
 				"
-				:disabled="disabled || !firstChangesAllowed"
+				:disabled="disabled || !firstSaveAllowed"
 				:loading="loading"
 				:fields="firstFields"
 				:model-value="firstItem"
@@ -377,7 +326,7 @@ const secondFields = computed(() => {
 						v-tooltip="t('interfaces.translations.toggle_split_view')"
 						name="close"
 						clickable
-						@click.stop="splitView = !splitView"
+						@click="splitView = false"
 					/>
 				</template>
 			</language-select>
@@ -389,7 +338,7 @@ const secondFields = computed(() => {
 						? secondItemInitial?.[relationInfo?.junctionPrimaryKeyField.field]
 						: null
 				"
-				:disabled="disabled || !secondChangesAllowed"
+				:disabled="disabled || !secondSaveAllowed"
 				:loading="loading"
 				:initial-values="secondItemInitial"
 				:fields="secondFields"
@@ -411,23 +360,23 @@ const secondFields = computed(() => {
 	@include form-grid;
 
 	.v-form {
-		--form-vertical-gap: 32px;
-		--v-chip-color: var(--primary);
-		--v-chip-background-color: var(--primary-alt);
+		--theme--form--row-gap: 32px;
+		--v-chip-color: var(--theme--primary);
+		--v-chip-background-color: var(--theme--primary-background);
 
 		margin-top: 32px;
 	}
 
 	.primary {
 		.v-divider {
-			--v-divider-color: var(--primary-50);
+			--v-divider-color: var(--theme--primary-subdued);
 		}
 	}
 
 	.secondary {
 		.v-form {
-			--primary: var(--secondary);
-			--v-chip-color: var(--secondary);
+			--primary: var(--theme--secondary);
+			--v-chip-color: var(--theme--secondary);
 			--v-chip-background-color: var(--secondary-alt);
 		}
 
@@ -439,7 +388,7 @@ const secondFields = computed(() => {
 	.primary,
 	.secondary {
 		.v-divider {
-			margin-top: var(--form-vertical-gap);
+			margin-top: var(--theme--form--row-gap);
 		}
 	}
 }

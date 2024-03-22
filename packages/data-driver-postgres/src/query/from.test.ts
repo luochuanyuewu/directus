@@ -1,22 +1,17 @@
-import type { AbstractSqlQuery } from '@directus/data-sql';
-import { beforeEach, expect, test } from 'vitest';
+import type { AbstractSqlClauses } from '@directus/data-sql';
+import { expect, test } from 'vitest';
 import { from } from './from.js';
-import { randomIdentifier } from '@directus/random';
-
-let sample: {
-	statement: AbstractSqlQuery;
-};
-
-beforeEach(() => {
-	sample = {
-		statement: {
-			select: [],
-			from: randomIdentifier(),
-			parameters: [],
-		},
-	};
-});
+import { randomIdentifier, randomInteger } from '@directus/random';
 
 test('Returns parameterized FROM with escaped identifier', () => {
-	expect(from(sample.statement)).toStrictEqual(`FROM "${sample.statement.from}"`);
+	const tableIndex = randomInteger(0, 100);
+	const tableName = randomIdentifier();
+
+	const sample: AbstractSqlClauses = {
+		select: [],
+		from: { tableName, tableIndex },
+	};
+
+	const expected = `FROM "${tableName}" AS "t${tableIndex}"`;
+	expect(from(sample)).toStrictEqual(expected);
 });

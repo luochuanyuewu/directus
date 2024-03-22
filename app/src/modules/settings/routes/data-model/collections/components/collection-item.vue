@@ -24,7 +24,7 @@ const toggleCollapse = () => {
 };
 
 const nestedCollections = computed(() =>
-	props.collections.filter((collection) => collection.meta?.group === props.collection.collection)
+	props.collections.filter((collection) => collection.meta?.group === props.collection.collection),
 );
 
 function onGroupSortChange(collections: Collection[]) {
@@ -54,7 +54,9 @@ function onGroupSortChange(collections: Collection[]) {
 			</v-list-item-icon>
 			<div class="collection-item-detail">
 				<v-icon
-					:color="collection.meta?.hidden ? 'var(--foreground-subdued)' : collection.color ?? 'var(--primary)'"
+					:color="
+						collection.meta?.hidden ? 'var(--theme--foreground-subdued)' : collection.color ?? 'var(--theme--primary)'
+					"
 					class="collection-icon"
 					:name="collection.meta?.hidden ? 'visibility_off' : collection.icon"
 				/>
@@ -72,6 +74,7 @@ function onGroupSortChange(collections: Collection[]) {
 				v-tooltip="isCollectionExpanded ? t('collapse') : t('expand')"
 				:name="isCollectionExpanded ? 'unfold_less' : 'unfold_more'"
 				clickable
+				class="collapse-toggle"
 				@click.stop.prevent="toggleCollapse"
 			/>
 			<collection-options
@@ -84,13 +87,13 @@ function onGroupSortChange(collections: Collection[]) {
 		<transition-expand class="collection-items">
 			<draggable
 				v-if="isCollectionExpanded"
-				:force-fallback="true"
 				:model-value="nestedCollections"
 				:group="{ name: 'collections' }"
 				:swap-threshold="0.3"
 				class="drag-container"
 				item-key="collection"
 				handle=".drag-handle"
+				v-bind="{ 'force-fallback': true }"
 				@update:model-value="onGroupSortChange"
 			>
 				<template #item="{ element }">
@@ -107,7 +110,7 @@ function onGroupSortChange(collections: Collection[]) {
 	</div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .drag-container {
 	margin-top: 8px;
 	margin-left: 20px;
@@ -123,7 +126,7 @@ function onGroupSortChange(collections: Collection[]) {
 	align-items: center;
 	height: 100%;
 	overflow: hidden;
-	font-family: var(--family-monospace);
+	font-family: var(--theme--fonts--monospace--font-family);
 	pointer-events: none;
 }
 
@@ -132,13 +135,13 @@ function onGroupSortChange(collections: Collection[]) {
 }
 
 .hidden .collection-name {
-	color: var(--foreground-subdued);
+	color: var(--theme--foreground-subdued);
 }
 
 .collection-note {
 	margin-left: 16px;
 	overflow: hidden;
-	color: var(--foreground-subdued);
+	color: var(--theme--foreground-subdued);
 	white-space: nowrap;
 	text-overflow: ellipsis;
 	opacity: 0;
@@ -155,5 +158,13 @@ function onGroupSortChange(collections: Collection[]) {
 
 .drag-handle {
 	cursor: grab;
+}
+
+.collapse-toggle {
+	--v-icon-color: var(--theme--foreground-subdued);
+
+	&:hover {
+		--v-icon-color: var(--theme--foreground);
+	}
 }
 </style>

@@ -22,7 +22,7 @@ export const authentication = (mode: AuthenticationMode = 'cookie', config: Part
 	return <Schema extends object>(client: DirectusClient<Schema>): AuthenticationClient<Schema> => {
 		const authConfig = { ...defaultConfigValues, ...config };
 		let refreshPromise: Promise<AuthenticationData> | null = null;
-		let refreshTimeout: NodeJS.Timer | null = null;
+		let refreshTimeout: ReturnType<typeof setTimeout> | null = null;
 		const storage = authConfig.storage ?? memoryStorage();
 
 		const resetStorage = () => {
@@ -88,7 +88,7 @@ export const authentication = (mode: AuthenticationMode = 'cookie', config: Part
 					fetchOptions.credentials = authConfig.credentials;
 				}
 
-				const body: Record<string, any> = { mode };
+				const body: Record<string, string> = { mode };
 
 				if (mode === 'json' && authData?.refresh_token) {
 					body['refresh_token'] = authData.refresh_token;
@@ -154,11 +154,13 @@ export const authentication = (mode: AuthenticationMode = 'cookie', config: Part
 					fetchOptions.credentials = authConfig.credentials;
 				}
 
+				const body: Record<string, string> = { mode };
+
 				if (mode === 'json' && authData?.refresh_token) {
-					fetchOptions.body = JSON.stringify({
-						refresh_token: authData.refresh_token,
-					});
+					body['refresh_token'] = authData.refresh_token;
 				}
+
+				fetchOptions.body = JSON.stringify(body);
 
 				const requestUrl = getRequestUrl(client.url, '/auth/logout');
 				await request(requestUrl.toString(), fetchOptions, client.globals.fetch);

@@ -1,10 +1,12 @@
+import { useEnv } from '@directus/env';
+import { InvalidQueryError } from '@directus/errors';
 import type { Query } from '@directus/types';
 import Joi from 'joi';
 import { isPlainObject, uniq } from 'lodash-es';
 import { stringify } from 'wellknown';
-import env from '../env.js';
-import { InvalidQueryError } from '../errors/index.js';
 import { calculateFieldDepth } from './calculate-field-depth.js';
+
+const env = useEnv();
 
 const querySchema = Joi.object({
 	fields: Joi.array().items(Joi.string()),
@@ -13,13 +15,18 @@ const querySchema = Joi.object({
 	filter: Joi.object({}).unknown(),
 	limit:
 		'QUERY_LIMIT_MAX' in env && env['QUERY_LIMIT_MAX'] !== -1
-			? Joi.number().integer().min(-1).max(env['QUERY_LIMIT_MAX']) // min should be 0
+			? Joi.number()
+					.integer()
+					.min(-1)
+					.max(env['QUERY_LIMIT_MAX'] as number) // min should be 0
 			: Joi.number().integer().min(-1),
 	offset: Joi.number().integer().min(0),
 	page: Joi.number().integer().min(0),
 	meta: Joi.array().items(Joi.string().valid('total_count', 'filter_count')),
 	search: Joi.string(),
 	export: Joi.string().valid('csv', 'json', 'xml', 'yaml'),
+	version: Joi.string(),
+	versionRaw: Joi.boolean(),
 	aggregate: Joi.object(),
 	deep: Joi.object(),
 	alias: Joi.object(),
@@ -102,6 +109,7 @@ function validateFilter(filter: Query['filter']) {
 		} else if (Array.isArray(nested) === false) {
 			validateFilterPrimitive(nested, '_eq');
 		} else {
+			// @ts-ignore TODO Check which case this is supposed to cover
 			validateFilter(nested);
 		}
 	}

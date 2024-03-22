@@ -1,20 +1,19 @@
 <script setup lang="ts">
 import { useEditsGuard } from '@/composables/use-edits-guard';
-import { useFormFields } from '@/composables/use-form-fields';
 import { useItem } from '@/composables/use-item';
-import { usePermissions } from '@/composables/use-permissions';
 import { useShortcut } from '@/composables/use-shortcut';
 import { setLanguage } from '@/lang/set-language';
 import { useCollectionsStore } from '@/stores/collections';
 import { useFieldsStore } from '@/stores/fields';
 import { useServerStore } from '@/stores/server';
 import { useUserStore } from '@/stores/user';
+import { getAssetUrl } from '@/utils/get-asset-url';
 import { userName } from '@/utils/user-name';
 import CommentsSidebarDetail from '@/views/private/components/comments-sidebar-detail.vue';
 import RevisionsDrawerDetail from '@/views/private/components/revisions-drawer-detail.vue';
 import SaveOptions from '@/views/private/components/save-options.vue';
 import { useCollection } from '@directus/composables';
-import type { Field, User } from '@directus/types';
+import type { User } from '@directus/types';
 import { computed, ref, toRefs } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
@@ -48,6 +47,7 @@ const {
 	edits,
 	hasEdits,
 	item,
+	permissions,
 	saving,
 	loading,
 	save,
@@ -66,8 +66,13 @@ const {
 		? {
 				fields: ['*', 'role.*'],
 		  }
-		: undefined
+		: undefined,
 );
+
+const {
+	collectionPermissions: { createAllowed, revisionsAllowed },
+	itemPermissions: { updateAllowed, deleteAllowed, saveAllowed, archiveAllowed, fields },
+} = permissions;
 
 const user = computed(() => ({ ...item.value, role: item.value?.role?.id }));
 
@@ -85,7 +90,9 @@ const { confirmLeave, leaveTo } = useEditsGuard(hasEdits);
 const confirmDelete = ref(false);
 const confirmArchive = ref(false);
 
-const avatarSrc = computed(() => (item.value?.avatar ? `/assets/${item.value.avatar}?key=system-medium-cover` : null));
+const avatarSrc = computed(() =>
+	item.value?.avatar ? getAssetUrl(`${item.value.avatar}?key=system-medium-cover`) : null,
+);
 
 const avatarError = ref(null);
 
@@ -100,14 +107,11 @@ const title = computed(() => {
 	return t('adding_user');
 });
 
-const { createAllowed, deleteAllowed, archiveAllowed, saveAllowed, updateAllowed, revisionsAllowed, fields } =
-	usePermissions(ref('directus_users'), item, isNew);
-
 // These fields will be shown in the sidebar instead
 const fieldsDenyList = ['id', 'last_page', 'created_on', 'created_by', 'modified_by', 'modified_on', 'last_access'];
 
 const fieldsFiltered = computed(() => {
-	return fields.value.filter((field: Field) => {
+	return fields.value.filter((field) => {
 		// These fields should only be editable when creating new users or by administrators
 		if (!isNew.value && ['provider', 'external_identifier'].includes(field.field) && !userStore.isAdmin) {
 			field.meta.readonly = true;
@@ -116,8 +120,6 @@ const fieldsFiltered = computed(() => {
 		return !fieldsDenyList.includes(field.field);
 	});
 });
-
-const { formFields } = useFormFields(fieldsFiltered);
 
 const archiveTooltip = computed(() => {
 	if (archiveAllowed.value === false) return t('not_allowed');
@@ -400,7 +402,7 @@ function revert(values: Record<string, any>) {
 				ref="form"
 				v-model="edits"
 				:disabled="isNew ? false : updateAllowed === false"
-				:fields="formFields"
+				:fields="fieldsFiltered"
 				:loading="loading"
 				:initial-values="user"
 				:primary-key="primaryKey"
@@ -437,12 +439,12 @@ function revert(values: Record<string, any>) {
 
 <style lang="scss" scoped>
 .action-delete {
-	--v-button-background-color-hover: var(--danger) !important;
+	--v-button-background-color-hover: var(--theme--danger) !important;
 	--v-button-color-hover: var(--white) !important;
 }
 
 .header-icon.secondary {
-	--v-button-background-color: var(--background-normal);
+	--v-button-background-color: var(--theme--background-normal);
 }
 
 .user-item {
@@ -451,19 +453,19 @@ function revert(values: Record<string, any>) {
 }
 
 .user-box {
-	--v-skeleton-loader-background-color: var(--background-normal);
+	--v-skeleton-loader-background-color: var(--theme--background-normal);
 
 	display: flex;
 	align-items: center;
-	max-width: calc(var(--form-column-max-width) * 2 + var(--form-horizontal-gap));
+	max-width: calc(var(--form-column-max-width) * 2 + var(--theme--form--column-gap));
 	height: 112px;
-	margin-bottom: var(--form-vertical-gap);
+	margin-bottom: var(--theme--form--row-gap);
 	padding: 20px;
-	background-color: var(--background-normal);
-	border-radius: calc(var(--border-radius) + 4px);
+	background-color: var(--theme--background-normal);
+	border-radius: calc(var(--theme--border-radius) + 4px);
 
 	.avatar {
-		--v-icon-color: var(--foreground-subdued);
+		--v-icon-color: var(--theme--foreground-subdued);
 
 		display: flex;
 		flex-shrink: 0;
@@ -473,10 +475,9 @@ function revert(values: Record<string, any>) {
 		height: 84px;
 		margin-right: 16px;
 		overflow: hidden;
-		background-color: var(--background-normal);
+		background-color: var(--theme--background-normal);
 		border: solid 6px var(--white);
 		border-radius: 100%;
-		box-shadow: var(--card-shadow);
 
 		.v-skeleton-loader {
 			width: 100%;
@@ -509,25 +510,25 @@ function revert(values: Record<string, any>) {
 		}
 
 		.v-chip {
-			--v-chip-color: var(--foreground-subdued);
-			--v-chip-background-color: var(--background-subdued);
-			--v-chip-color-hover: var(--foreground-subdued);
-			--v-chip-background-color-hover: var(--background-subdued);
+			--v-chip-color: var(--theme--foreground-subdued);
+			--v-chip-background-color: var(--theme--background-subdued);
+			--v-chip-color-hover: var(--theme--foreground-subdued);
+			--v-chip-background-color-hover: var(--theme--background-subdued);
 
 			margin-top: 4px;
 
 			&.active {
-				--v-chip-color: var(--primary);
-				--v-chip-background-color: var(--primary-25);
-				--v-chip-color-hover: var(--primary);
-				--v-chip-background-color-hover: var(--primary-25);
+				--v-chip-color: var(--theme--primary);
+				--v-chip-background-color: var(--theme--primary-subdued);
+				--v-chip-color-hover: var(--theme--primary);
+				--v-chip-background-color-hover: var(--theme--primary-subdued);
 			}
 		}
 
 		.title,
 		.email,
 		.location {
-			color: var(--foreground-subdued);
+			color: var(--theme--foreground-subdued);
 		}
 
 		.name {

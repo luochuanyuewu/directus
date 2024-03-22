@@ -1,4 +1,3 @@
-import { getToken } from '@/api';
 import { i18n } from '@/lang';
 import { addQueryToPath } from '@/utils/add-query-to-path';
 import { getPublicURL } from '@/utils/get-root-path';
@@ -37,7 +36,7 @@ export default function useImage(
 	options: {
 		storageAssetTransform: Ref<string>;
 		storageAssetPresets: Ref<SettingsStorageAssetPreset[]>;
-	}
+	},
 ): UsableImage {
 	const imageDrawerOpen = ref(false);
 	const imageSelection = ref<ImageSelection | null>(null);
@@ -47,14 +46,14 @@ export default function useImage(
 		() => imageSelection.value?.transformationKey,
 		(newKey) => {
 			selectedPreset.value = options.storageAssetPresets.value.find(
-				(preset: SettingsStorageAssetPreset) => preset.key === newKey
+				(preset: SettingsStorageAssetPreset) => preset.key === newKey,
 			);
 
 			if (selectedPreset.value) {
 				imageSelection.value!.width = selectedPreset.value.width ?? undefined;
 				imageSelection.value!.height = selectedPreset.value.height ?? undefined;
 			}
-		}
+		},
 	);
 
 	const imageButton = {
@@ -79,7 +78,7 @@ export default function useImage(
 
 				if (transformationKey) {
 					selectedPreset.value = options.storageAssetPresets.value.find(
-						(preset: SettingsStorageAssetPreset) => preset.key === transformationKey
+						(preset: SettingsStorageAssetPreset) => preset.key === transformationKey,
 					);
 				}
 
@@ -90,7 +89,7 @@ export default function useImage(
 					width: selectedPreset.value ? selectedPreset.value.width ?? undefined : width,
 					height: selectedPreset.value ? selectedPreset.value.height ?? undefined : height,
 					transformationKey,
-					previewUrl: replaceUrlAccessToken(imageUrl, imageToken.value ?? getToken()),
+					previewUrl: replaceUrlAccessToken(imageUrl, imageToken.value),
 				};
 			} else {
 				imageSelection.value = null;
@@ -125,7 +124,7 @@ export default function useImage(
 			lazy: false,
 			width: image.width,
 			height: image.height,
-			previewUrl: replaceUrlAccessToken(assetUrl, imageToken.value ?? getToken()),
+			previewUrl: replaceUrlAccessToken(assetUrl, imageToken.value),
 		};
 	}
 

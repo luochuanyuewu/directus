@@ -5,9 +5,10 @@ export type Role = {
 	icon: string;
 	enforce_tfa: null | boolean;
 	external_id: null | string;
-	ip_whitelist: string[];
+	ip_access: string[];
 	app_access: boolean;
 	admin_access: boolean;
+	users: string[];
 };
 
 export type Avatar = {
@@ -28,7 +29,11 @@ export type User = {
 	tfa_secret: string | null;
 	auth_data: Record<string, any> | null;
 	provider: string;
-	theme: string | null;
+	appearance: 'auto' | 'dark' | 'light' | null;
+	theme_light: string | null;
+	theme_dark: string | null;
+	theme_light_overrides: Record<string, unknown> | null;
+	theme_dark_overrides: Record<string, unknown> | null;
 	role: Role | null;
 	language: string | null;
 	avatar: Avatar | null;

@@ -1,14 +1,16 @@
 import { isDirectusError } from '@directus/errors';
 import express from 'express';
-import { ErrorCode, ForbiddenError, RouteNotFoundError } from '../errors/index.js';
+import { ErrorCode, ForbiddenError, RouteNotFoundError } from '@directus/errors';
 import collectionExists from '../middleware/collection-exists.js';
 import { respond } from '../middleware/respond.js';
 import { validateBatch } from '../middleware/validate-batch.js';
+import { mergeContentVersions } from '../middleware/merge-content-versions.js';
 import { ItemsService } from '../services/items.js';
 import { MetaService } from '../services/meta.js';
 import type { PrimaryKey } from '../types/index.js';
 import asyncHandler from '../utils/async-handler.js';
 import { sanitizeQuery } from '../utils/sanitize-query.js';
+import { isSystemCollection } from '@directus/system-data';
 
 const router = express.Router();
 
@@ -16,7 +18,7 @@ router.post(
 	'/:collection',
 	collectionExists,
 	asyncHandler(async (req, res, next) => {
-		if (req.params['collection']!.startsWith('directus_')) throw new ForbiddenError();
+		if (isSystemCollection(req.params['collection']!)) throw new ForbiddenError();
 
 		if (req.singleton) {
 			throw new RouteNotFoundError({ path: req.path });
@@ -55,11 +57,11 @@ router.post(
 
 		return next();
 	}),
-	respond
+	respond,
 );
 
 const readHandler = asyncHandler(async (req, res, next) => {
-	if (req.params['collection']!.startsWith('directus_')) throw new ForbiddenError();
+	if (isSystemCollection(req.params['collection']!)) throw new ForbiddenError();
 
 	const service = new ItemsService(req.collection, {
 		accountability: req.accountability,
@@ -92,13 +94,13 @@ const readHandler = asyncHandler(async (req, res, next) => {
 });
 
 router.search('/:collection', collectionExists, validateBatch('read'), readHandler, respond);
-router.get('/:collection', collectionExists, readHandler, respond);
+router.get('/:collection', collectionExists, readHandler, mergeContentVersions, respond);
 
 router.get(
 	'/:collection/:pk',
 	collectionExists,
 	asyncHandler(async (req, res, next) => {
-		if (req.params['collection']!.startsWith('directus_')) throw new ForbiddenError();
+		if (isSystemCollection(req.params['collection']!)) throw new ForbiddenError();
 
 		const service = new ItemsService(req.collection, {
 			accountability: req.accountability,
@@ -113,7 +115,8 @@ router.get(
 
 		return next();
 	}),
-	respond
+	mergeContentVersions,
+	respond,
 );
 
 router.patch(
@@ -121,7 +124,7 @@ router.patch(
 	collectionExists,
 	validateBatch('update'),
 	asyncHandler(async (req, res, next) => {
-		if (req.params['collection']!.startsWith('directus_')) throw new ForbiddenError();
+		if (isSystemCollection(req.params['collection']!)) throw new ForbiddenError();
 
 		const service = new ItemsService(req.collection, {
 			accountability: req.accountability,
@@ -160,14 +163,14 @@ router.patch(
 
 		return next();
 	}),
-	respond
+	respond,
 );
 
 router.patch(
 	'/:collection/:pk',
 	collectionExists,
 	asyncHandler(async (req, res, next) => {
-		if (req.params['collection']!.startsWith('directus_')) throw new ForbiddenError();
+		if (isSystemCollection(req.params['collection']!)) throw new ForbiddenError();
 
 		if (req.singleton) {
 			throw new RouteNotFoundError({ path: req.path });
@@ -193,7 +196,7 @@ router.patch(
 
 		return next();
 	}),
-	respond
+	respond,
 );
 
 router.delete(
@@ -201,7 +204,7 @@ router.delete(
 	collectionExists,
 	validateBatch('delete'),
 	asyncHandler(async (req, _res, next) => {
-		if (req.params['collection']!.startsWith('directus_')) throw new ForbiddenError();
+		if (isSystemCollection(req.params['collection']!)) throw new ForbiddenError();
 
 		const service = new ItemsService(req.collection, {
 			accountability: req.accountability,
@@ -219,14 +222,14 @@ router.delete(
 
 		return next();
 	}),
-	respond
+	respond,
 );
 
 router.delete(
 	'/:collection/:pk',
 	collectionExists,
 	asyncHandler(async (req, _res, next) => {
-		if (req.params['collection']!.startsWith('directus_')) throw new ForbiddenError();
+		if (isSystemCollection(req.params['collection']!)) throw new ForbiddenError();
 
 		const service = new ItemsService(req.collection, {
 			accountability: req.accountability,
@@ -236,7 +239,7 @@ router.delete(
 		await service.deleteOne(req.params['pk']!);
 		return next();
 	}),
-	respond
+	respond,
 );
 
 export default router;

@@ -1,5 +1,5 @@
 import type { Query } from '../types/query.js';
-import type { ApplyQueryFields, CollectionType } from '../index.js';
+import type { ApplyQueryFields, CollectionType, WebSocketInterface } from '../index.js';
 
 export type WebSocketAuthModes = 'public' | 'handshake' | 'strict';
 
@@ -12,6 +12,7 @@ export interface WebSocketConfig {
 		  }
 		| false;
 	heartbeat?: boolean;
+	debug?: boolean;
 	url?: string;
 }
 
@@ -23,20 +24,20 @@ export interface SubscribeOptions<Schema extends object, Collection extends keyo
 
 export type WebSocketEvents = 'open' | 'close' | 'error' | 'message';
 export type RemoveEventHandler = () => void;
-export type WebSocketEventHandler = (this: WebSocket, ev: Event | CloseEvent | any) => any;
+export type WebSocketEventHandler = (this: WebSocketInterface, ev: Event | CloseEvent | any) => any;
 
 export interface WebSocketClient<Schema extends object> {
-	connect(): Promise<void>;
+	connect(): Promise<WebSocketInterface>;
 	disconnect(): void;
-	onWebSocket(event: 'open', callback: (this: WebSocket, ev: Event) => any): RemoveEventHandler;
-	onWebSocket(event: 'error', callback: (this: WebSocket, ev: Event) => any): RemoveEventHandler;
-	onWebSocket(event: 'close', callback: (this: WebSocket, ev: CloseEvent) => any): RemoveEventHandler;
-	onWebSocket(event: 'message', callback: (this: WebSocket, ev: any) => any): RemoveEventHandler;
+	onWebSocket(event: 'open', callback: (this: WebSocketInterface, ev: Event) => any): RemoveEventHandler;
+	onWebSocket(event: 'error', callback: (this: WebSocketInterface, ev: Event) => any): RemoveEventHandler;
+	onWebSocket(event: 'close', callback: (this: WebSocketInterface, ev: CloseEvent) => any): RemoveEventHandler;
+	onWebSocket(event: 'message', callback: (this: WebSocketInterface, ev: any) => any): RemoveEventHandler;
 	onWebSocket(event: WebSocketEvents, callback: WebSocketEventHandler): RemoveEventHandler;
 	sendMessage(message: string | Record<string, any>): void;
 	subscribe<Collection extends keyof Schema, const Options extends SubscribeOptions<Schema, Collection>>(
 		collection: Collection,
-		options?: Options
+		options?: Options,
 	): Promise<{
 		subscription: AsyncGenerator<
 			SubscriptionOutput<
@@ -52,6 +53,17 @@ export interface WebSocketClient<Schema extends object> {
 	}>;
 }
 
+export type ConnectionState =
+	| { code: 'open'; connection: WebSocketInterface; firstMessage: boolean }
+	| { code: 'connecting'; connection: Promise<WebSocketInterface> }
+	| { code: 'error' }
+	| { code: 'closed' };
+
+export type ReconnectState = {
+	attempts: number;
+	active: false | Promise<WebSocketInterface | void>;
+};
+
 type Fallback<Selected, Options> = Selected extends Options ? Selected : Options;
 export type SubscriptionOptionsEvents = 'create' | 'update' | 'delete';
 export type SubscriptionEvents = 'init' | SubscriptionOptionsEvents;
@@ -63,7 +75,7 @@ export type SubscriptionOutput<
 	Events extends SubscriptionEvents,
 	TItem = TQuery extends Query<Schema, Schema[Collection]>
 		? ApplyQueryFields<Schema, CollectionType<Schema, Collection>, TQuery['fields']>
-		: Partial<Schema[Collection]>
+		: Partial<Schema[Collection]>,
 > = { type: 'subscription'; uid?: string } & (
 	| {
 			[Event in Events]: { event: Event; data: SubscriptionPayload<TItem>[Event] };
@@ -76,4 +88,13 @@ export type SubscriptionPayload<Item> = {
 	create: Item[];
 	update: Item[];
 	delete: string[] | number[];
+};
+
+export type WebSocketAuthError = {
+	type: 'auth';
+	status: 'error';
+	error: {
+		code: string;
+		message: string;
+	};
 };

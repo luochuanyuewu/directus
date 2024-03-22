@@ -157,6 +157,13 @@ select-icon, which provides a searchable dropdown of the icon library.
 
 ## Work With Images
 
+::: warning DEPRECATED
+
+Since [Directus version 10.10.0](/releases/breaking-changes.html#version-10-10-0) this is no longer required and you can
+rely on [session cookies](/reference/authentication.html#access-tokens) instead.
+
+:::
+
 When working with images inside Directus, you need an access token. Rather than use a static token, create a new file
 called `use-directus-token.js` and use the following script that fetches the current user’s access token:
 
@@ -359,11 +366,11 @@ under the closing `script` tag:
 	border-radius: 0;
 	appearance: none;
 	& .v-icon {
-		--v-icon-color: var(--foreground-subdued);
+		--v-icon-color: var(--theme--foreground-subdued);
 		svg {
 			width: 100%;
 			height: 100%;
-			fill: var(--foreground-subdued);
+			fill: var(--theme--foreground-subdued);
 		}
 	}
     & > .v-icon {
@@ -378,7 +385,7 @@ under the closing `script` tag:
             margin: 0 auto 3px;
             width: 42px;
             height: 42px;
-            border: 2px solid transparent;
+            border: var(--theme--border-width) solid transparent;
             border-radius: 50%;
             padding: 7px;
             background: var(--background-input);
@@ -395,10 +402,10 @@ under the closing `script` tag:
 	&:disabled {
 		cursor: not-allowed;
 		.label {
-			color: var(--foreground-subdued);
+			color: var(--theme--foreground-subdued);
 		}
 		.v-icon {
-			--v-icon-color: var(--foreground-subdued);
+			--v-icon-color: var(--theme--foreground-subdued);
 		}
 	}
 	&.block {
@@ -406,10 +413,10 @@ under the closing `script` tag:
 		width: 100%;
 		height: auto;
 		padding: 10px; // 14 - 4 (border)
-		border: 2px solid var(--border-normal);
-		border-radius: var(--border-radius);
+		border: var(--theme--border-width) solid var(--theme--form--field--input--border-color);
+		border-radius: var(--theme--border-radius);
         &:hover {
-            border-color: var(--border-normal-alt);
+            border-color: var(--theme--form--field--input--border-color-hover);
         }
 		&::before {
 			position: absolute;
@@ -417,8 +424,8 @@ under the closing `script` tag:
 			left: 0;
 			width: 100%;
 			height: 100%;
-			background-color: var(--background-subdued);
-			border-radius: var(--border-radius);
+			background-color: var(--theme--background-subdued);
+			border-radius: var(--theme--border-radius);
 			content: '';
 		}
 		.label {
@@ -427,23 +434,23 @@ under the closing `script` tag:
 	}
 	&:not(:disabled):hover {
 		.v-icon {
-			--v-icon-color: var(--foreground-subdued);
+			--v-icon-color: var(--theme--foreground-subdued);
 		}
 	}
 	&:not(:disabled).checked {
 		.v-icon {
-			--v-icon-color: var(--primary);
+			--v-icon-color: var(--theme--primary);
 			svg {
-				fill: var(--primary);
+				fill: var(--theme--primary);
 			}
 		}
 		&.block {
-			border-color: var(--primary);
+			border-color: var(--theme--primary);
 			.label {
-				color: var(--primary);
+				color: var(--theme--primary);
 			}
 			&::before {
-				background-color: var(--primary);
+				background-color: var(--theme--primary);
 				opacity: 0.1;
 			}
 		}
@@ -686,11 +693,11 @@ export default {
 	border-radius: 0;
 	appearance: none;
 	& .v-icon {
-		--v-icon-color: var(--foreground-subdued);
+		--v-icon-color: var(--theme--foreground-subdued);
 		svg {
 			width: 100%;
 			height: 100%;
-			fill: var(--foreground-subdued);
+			fill: var(--theme--foreground-subdued);
 		}
 	}
     & > .v-icon {
@@ -705,7 +712,7 @@ export default {
             margin: 0 auto 3px;
             width: 42px;
             height: 42px;
-            border: 2px solid transparent;
+            border: var(--theme--border-width) solid transparent;
             border-radius: 50%;
             padding: 7px;
             background: var(--background-input);
@@ -722,10 +729,10 @@ export default {
 	&:disabled {
 		cursor: not-allowed;
 		.label {
-			color: var(--foreground-subdued);
+			color: var(--theme--foreground-subdued);
 		}
 		.v-icon {
-			--v-icon-color: var(--foreground-subdued);
+			--v-icon-color: var(--theme--foreground-subdued);
 		}
 	}
 	&.block {
@@ -733,10 +740,10 @@ export default {
 		width: 100%;
 		height: auto;
 		padding: 10px; // 14 - 4 (border)
-		border: 2px solid var(--border-normal);
-		border-radius: var(--border-radius);
+		border: var(--theme--border-width) solid var(--theme--form--field--input--border-color);
+		border-radius: var(--theme--border-radius);
         &:hover {
-            border-color: var(--border-normal-alt);
+            border-color: var(--theme--form--field--input--border-color-hover);
         }
 		&::before {
 			position: absolute;
@@ -744,8 +751,8 @@ export default {
 			left: 0;
 			width: 100%;
 			height: 100%;
-			background-color: var(--background-subdued);
-			border-radius: var(--border-radius);
+			background-color: var(--theme--background-subdued);
+			border-radius: var(--theme--border-radius);
 			content: '';
 		}
 		.label {
@@ -754,23 +761,23 @@ export default {
 	}
 	&:not(:disabled):hover {
 		.v-icon {
-			--v-icon-color: var(--foreground-subdued);
+			--v-icon-color: var(--theme--foreground-subdued);
 		}
 	}
 	&:not(:disabled).checked {
 		.v-icon {
-			--v-icon-color: var(--primary);
+			--v-icon-color: var(--theme--primary);
 			svg {
-				fill: var(--primary);
+				fill: var(--theme--primary);
 			}
 		}
 		&.block {
-			border-color: var(--primary);
+			border-color: var(--theme--primary);
 			.label {
-				color: var(--primary);
+				color: var(--theme--primary);
 			}
 			&::before {
-				background-color: var(--primary);
+				background-color: var(--theme--primary);
 				opacity: 0.1;
 			}
 		}

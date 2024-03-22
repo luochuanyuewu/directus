@@ -7,10 +7,10 @@ author: Bryant Gillespie
 
 > {{ $frontmatter.description }}
 
-A Headless CMS provides a way of managing content for websites, mobile apps, and other digital applications. It
-separates the content from the presentation layer, allowing developers to create the frontend of a website or app with
-whatever technology they choose. With a Headless CMS, content can be created and managed in one place, and allows any
-number of applications built upon that data.
+A [Headless CMS](https://directus.io/solutions/headless-cms) provides a way of managing content for websites, mobile
+apps, and other digital applications. It separates the content from the presentation layer, allowing developers to
+create the frontend of a website or app with whatever technology they choose. With a Headless CMS, content can be
+created and managed in one place, and allows any number of applications built upon that data.
 
 Learn more about [Headless CMS Concepts](/use-cases/headless-cms/concepts).
 
@@ -30,13 +30,14 @@ Learn more about [Headless CMS Concepts](/use-cases/headless-cms/concepts).
 ### Learn Directus
 
 - [Create Re-Usable Page Components](/guides/headless-cms/reusable-components)
+- [Implementing Content Versioning](/guides/headless-cms/content-versioning)
 - [Build Approval Workflows](/guides/headless-cms/approval-workflows)
 - [Schedule Future Content For Dynamic Sites](/guides/headless-cms/schedule-content/dynamic-sites)
 - [Schedule Future Content For Static Sites](/guides/headless-cms/schedule-content/static-sites)
 
 ### Build Your Project
 
-- [Build a Website with Directus and Next.js](/guides/headless-cms/build-static-website/next-13)
+- [Build a Website with Directus and Next.js](/guides/headless-cms/build-static-website/next)
 - [Build a Website with Directus and Nuxt.js](/guides/headless-cms/build-static-website/nuxt-3)
 
 ### Deployment & Best Practice

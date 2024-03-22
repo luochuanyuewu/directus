@@ -12,30 +12,28 @@ import { isEqual, isNil, omit, orderBy } from 'lodash';
 import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
 import { useRelationsStore } from './relations';
+import { isSystemCollection } from '@directus/system-data';
 
 export const useCollectionsStore = defineStore('collectionsStore', () => {
 	const collections = ref<Collection[]>([]);
 
 	const visibleCollections = computed(() =>
 		collections.value
-			.filter(({ collection }) => collection.startsWith('directus_') === false)
-			.filter((collection) => collection.meta && collection.meta?.hidden !== true)
+			.filter(({ collection }) => isSystemCollection(collection) === false)
+			.filter((collection) => collection.meta && collection.meta?.hidden !== true),
 	);
 
 	const allCollections = computed(() =>
-		collections.value.filter(({ collection }) => collection.startsWith('directus_') === false)
+		collections.value.filter(({ collection }) => isSystemCollection(collection) === false),
 	);
 
 	const databaseCollections = computed(() => allCollections.value.filter((collection) => collection.schema));
 
 	const crudSafeSystemCollections = computed(() =>
 		orderBy(
-			collections.value.filter((collection) => {
-				return collection.collection.startsWith('directus_') === true;
-			}),
-			['collection'],
-			['asc']
-		).filter((collection) => COLLECTIONS_DENY_LIST.includes(collection.collection) === false)
+			collections.value.filter((collection) => isSystemCollection(collection.collection)),
+			'collection',
+		).filter((collection) => COLLECTIONS_DENY_LIST.includes(collection.collection) === false),
 	);
 
 	return {
@@ -67,7 +65,7 @@ export const useCollectionsStore = defineStore('collectionsStore', () => {
 	}
 
 	function prepareCollectionForApp(collection: CollectionRaw): Collection {
-		const icon = collection.meta?.icon || 'label';
+		const icon = collection.meta?.icon || 'database';
 		const color = collection.meta?.color;
 		let name = formatTitle(collection.collection);
 		const type = getCollectionType(collection);
@@ -83,10 +81,8 @@ export const useCollectionsStore = defineStore('collectionsStore', () => {
 			}
 		}
 
-		if (collection.meta && !isNil(collection.meta.translations) && Array.isArray(collection.meta.translations)) {
-			for (let i = 0; i < collection.meta.translations.length; i++) {
-				const { language, translation, singular, plural } = collection.meta.translations[i];
-
+		if (collection.meta && Array.isArray(collection.meta.translations)) {
+			for (const { language, translation, singular, plural } of collection.meta.translations) {
 				i18n.global.mergeLocaleMessage(language, {
 					...(translation
 						? {
@@ -148,7 +144,7 @@ export const useCollectionsStore = defineStore('collectionsStore', () => {
 
 				const updatedCollectionResponse = await api.patch<{ data: CollectionRaw }>(
 					`/collections/${collection}`,
-					rawValues
+					rawValues,
 				);
 
 				collections.value = collections.value.map((existingCollection: Collection) => {
@@ -163,8 +159,8 @@ export const useCollectionsStore = defineStore('collectionsStore', () => {
 
 				collections.value = [...collections.value, prepareCollectionForApp(createdCollectionResponse.data.data)];
 			}
-		} catch (err: any) {
-			unexpectedError(err);
+		} catch (error) {
+			unexpectedError(error);
 		}
 	}
 
@@ -176,8 +172,8 @@ export const useCollectionsStore = defineStore('collectionsStore', () => {
 			notify({
 				title: i18n.global.t('update_collection_success'),
 			});
-		} catch (err: any) {
-			unexpectedError(err);
+		} catch (error) {
+			unexpectedError(error);
 		}
 	}
 
@@ -191,8 +187,8 @@ export const useCollectionsStore = defineStore('collectionsStore', () => {
 			notify({
 				title: i18n.global.t('delete_collection_success'),
 			});
-		} catch (err: any) {
-			unexpectedError(err);
+		} catch (error) {
+			unexpectedError(error);
 		}
 	}
 

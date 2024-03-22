@@ -1,14 +1,11 @@
 <script setup lang="ts">
-import { useI18n } from 'vue-i18n';
 import { useClipboard } from '@/composables/use-clipboard';
+import { Role } from '@directus/types';
+import { useI18n } from 'vue-i18n';
 
-interface Props {
-	role?: Record<string, any> | null;
-}
-
-withDefaults(defineProps<Props>(), {
-	role: () => null,
-});
+defineProps<{
+	role: Role | null;
+}>();
 
 const { t } = useI18n();
 
@@ -49,8 +46,8 @@ const { isCopySupported, copyToClipboard } = useClipboard();
 	align-items: center;
 
 	.clipboard-icon {
-		--v-icon-color: var(--foreground-subdued);
-		--v-icon-color-hover: var(--foreground-normal);
+		--v-icon-color: var(--theme--foreground-subdued);
+		--v-icon-color-hover: var(--theme--foreground);
 
 		margin-left: 4px;
 	}

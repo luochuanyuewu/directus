@@ -102,6 +102,11 @@ function nudge() {
 .container.center {
 	align-items: center;
 	justify-content: center;
+	z-index: 600;
+}
+
+.container.center:has(.allow-drawer) {
+	z-index: 500;
 }
 
 .container.center.nudge > :slotted(*:not(:first-child)) {
@@ -121,7 +126,7 @@ function nudge() {
 .container :slotted(.v-card) {
 	--v-card-min-width: calc(100vw - 40px);
 	--v-card-padding: 28px;
-	--v-card-background-color: var(--background-page);
+	--v-card-background-color: var(--theme--background);
 }
 
 .container :slotted(.v-card) .v-card-title {

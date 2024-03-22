@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { getAssetUrl } from '@/utils/get-asset-url';
 import { computed, ref } from 'vue';
 
 type Image = {
@@ -16,7 +17,7 @@ const imageError = ref(false);
 
 const src = computed(() => {
 	if (props.value?.id === null || props.value?.id === undefined) return null;
-	return `/assets/${props.value.id}?key=system-small-cover`;
+	return getAssetUrl(`${props.value.id}?key=system-small-cover`);
 });
 </script>
 
@@ -39,7 +40,7 @@ img {
 	width: auto;
 	height: 100%;
 	vertical-align: -30%;
-	border-radius: var(--border-radius);
+	border-radius: var(--theme--border-radius);
 
 	&.circle {
 		border-radius: 100%;

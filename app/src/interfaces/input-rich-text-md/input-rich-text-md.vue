@@ -8,7 +8,7 @@ import 'codemirror/mode/markdown/markdown';
 
 import { useShortcut } from '@/composables/use-shortcut';
 import { useWindowSize } from '@/composables/use-window-size';
-import { getPublicURL } from '@/utils/get-root-path';
+import { getAssetUrl } from '@/utils/get-asset-url';
 import { percentage } from '@/utils/percentage';
 import { translateShortcut } from '@/utils/translate-shortcut';
 import { Alteration, CustomSyntax, applyEdit } from './edits';
@@ -46,7 +46,7 @@ const props = withDefaults(
 			'empty',
 		],
 		customSyntax: () => [],
-	}
+	},
 );
 
 const emit = defineEmits(['input']);
@@ -108,7 +108,7 @@ onMounted(async () => {
 		const previewBox = markdownInterface.value.getElementsByClassName('preview-box')[0];
 
 		const observer = new MutationObserver(() => {
-			count.value = previewBox.textContent?.replace('\n', '')?.length ?? 0;
+			count.value = previewBox?.textContent?.replace('\n', '')?.length ?? 0;
 		});
 
 		const config = { characterData: true, childList: true, subtree: true };
@@ -130,7 +130,7 @@ watch(
 			codemirror.setValue(newValue ?? '');
 			codemirror.refresh();
 		}
-	}
+	},
 );
 
 watch(
@@ -139,14 +139,14 @@ watch(
 		codemirror?.setOption('readOnly', readOnly.value);
 		codemirror?.setOption('cursorBlinkRate', disabled ? -1 : 530);
 	},
-	{ immediate: true }
+	{ immediate: true },
 );
 
 watch(
 	() => props.direction,
 	(direction) => {
 		codemirror?.setOption('direction', direction === 'rtl' ? direction : 'ltr');
-	}
+	},
 );
 
 const editFamily = computed(() => {
@@ -183,7 +183,7 @@ useShortcut('meta+alt+6', () => edit('heading', { level: 6 }), markdownInterface
 function onImageUpload(image: any) {
 	if (!codemirror) return;
 
-	let url = getPublicURL() + `assets/` + image.id;
+	let url = getAssetUrl(image.id);
 
 	if (props.imageToken) {
 		url += '?access_token=' + props.imageToken;
@@ -398,7 +398,7 @@ function edit(type: Alteration, options?: Record<string, any>) {
 			@esc="imageDialogOpen = false"
 			@update:model-value="imageDialogOpen = false"
 		>
-			<v-card>
+			<v-card class="allow-drawer">
 				<v-card-title>{{ t('upload_from_device') }}</v-card-title>
 				<v-card-text>
 					<v-upload from-url from-library :folder="folder" @input="onImageUpload" />
@@ -416,15 +416,19 @@ function edit(type: Alteration, options?: Record<string, any>) {
 
 .interface-input-rich-text-md {
 	--v-button-background-color: transparent;
-	--v-button-color: var(--foreground-normal);
-	--v-button-background-color-hover: var(--border-normal);
-	--v-button-color-hover: var(--foreground-normal);
+	--v-button-color: var(--theme--form--field--input--foreground);
+	--v-button-background-color-hover: var(--theme--form--field--input--border-color);
+	--v-button-color-hover: var(--theme--form--field--input--foreground);
 
 	min-height: 300px;
 	overflow: hidden;
-	font-family: var(--family-sans-serif);
-	border: 2px solid var(--border-normal);
-	border-radius: var(--border-radius);
+	font-family: var(--theme--fonts--sans--font-family);
+	border: var(--theme--border-width) solid var(--theme--form--field--input--border-color);
+	border-radius: var(--theme--border-radius);
+	box-shadow: var(--theme--form--field--input--box-shadow);
+	transition-duration: var(--fast);
+	transition-timing-function: var(--transition);
+	transition-property: box-shadow, border-color;
 }
 
 .interface-input-rich-text-md :deep(.CodeMirror-scroll) {
@@ -432,12 +436,17 @@ function edit(type: Alteration, options?: Record<string, any>) {
 }
 
 .interface-input-rich-text-md.disabled {
-	background-color: var(--background-subdued);
+	background-color: var(--theme--form--field--input--background-subdued);
+}
+
+.interface-input-rich-text-md:not(.disabled):hover {
+	border-color: var(--theme--form--field--input--border-color-hover);
+	box-shadow: var(--theme--form--field--input--box-shadow-hover);
 }
 
 .interface-input-rich-text-md:not(.disabled):focus-within {
-	border-color: var(--primary);
-	box-shadow: 0 0 16px -8px var(--primary);
+	border-color: var(--theme--form--field--input--border-color-focus);
+	box-shadow: var(--theme--form--field--input--box-shadow-focus);
 }
 
 textarea {
@@ -458,7 +467,7 @@ textarea {
 	position: absolute;
 	right: 10px;
 	bottom: 5px;
-	color: var(--foreground-subdued);
+	color: var(--theme--form--field--input--foreground-subdued);
 	font-weight: 600;
 	text-align: right;
 	vertical-align: middle;
@@ -466,15 +475,15 @@ textarea {
 }
 
 .warning {
-	color: var(--warning);
+	color: var(--theme--warning);
 }
 
 .danger {
-	color: var(--danger);
+	color: var(--theme--danger);
 }
 
 .interface-input-rich-text-md.disabled .preview-box {
-	color: var(--foreground-subdued);
+	color: var(--theme--form--field--input--foreground-subdued);
 }
 
 .interface-input-rich-text-md :deep(.CodeMirror) {
@@ -510,8 +519,8 @@ textarea {
 	align-items: center;
 	min-height: 40px;
 	padding: 0 4px;
-	background-color: var(--background-subdued);
-	border-bottom: 2px solid var(--border-normal);
+	background-color: var(--theme--form--field--input--background-subdued);
+	border-bottom: var(--theme--border-width) solid var(--theme--form--field--input--border-color);
 
 	.v-button + .v-button {
 		margin-left: 2px;
@@ -522,20 +531,20 @@ textarea {
 	}
 
 	.view {
-		--v-button-background-color: var(--border-subdued);
-		--v-button-color: var(--foreground-subdued);
-		--v-button-background-color-hover: var(--border-normal);
-		--v-button-color-hover: var(--foreground-normal);
-		--v-button-background-color-active: var(--border-normal);
-		--v-button-color-active: var(--foreground-normal);
+		--v-button-background-color: var(--theme--border-color-subdued);
+		--v-button-color: var(--theme--form--field--input--foreground-subdued);
+		--v-button-background-color-hover: var(--theme--form--field--input--border-color);
+		--v-button-color-hover: var(--theme--form--field--input--foreground);
+		--v-button-background-color-active: var(--theme--form--field--input--border-color);
+		--v-button-color-active: var(--theme--form--field--input--foreground);
 	}
 }
 
 .table-options {
 	@include form-grid;
 
-	--form-vertical-gap: 12px;
-	--form-horizontal-gap: 12px;
+	--theme--form--row-gap: 12px;
+	--theme--form--column-gap: 12px;
 
 	padding: 12px;
 

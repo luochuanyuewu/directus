@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useCollectionsStore } from '@/stores/collections';
+import { useUserStore } from '@/stores/user';
 import { isNil, orderBy } from 'lodash';
 import { computed, ref, toRefs } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -17,6 +18,7 @@ const { activeGroups, showHidden } = useNavigation(currentCollection);
 const search = ref('');
 
 const collectionsStore = useCollectionsStore();
+const userStore = useUserStore();
 
 const rootItems = computed(() => {
 	const shownCollections = showHidden.value ? collectionsStore.allCollections : collectionsStore.visibleCollections;
@@ -24,7 +26,7 @@ const rootItems = computed(() => {
 		shownCollections.filter((collection) => {
 			return isNil(collection?.meta?.group);
 		}),
-		['meta.sort', 'collection']
+		['meta.sort', 'collection'],
 	);
 });
 
@@ -32,7 +34,7 @@ const dense = computed(() => collectionsStore.visibleCollections.length > 5);
 const showSearch = computed(() => collectionsStore.visibleCollections.length > 20);
 
 const hasHiddenCollections = computed(
-	() => collectionsStore.allCollections.length > collectionsStore.visibleCollections.length
+	() => collectionsStore.allCollections.length > collectionsStore.visibleCollections.length,
 );
 </script>
 
@@ -52,6 +54,16 @@ const hasHiddenCollections = computed(
 			:mandatory="false"
 			:dense="dense"
 		>
+			<v-button
+				v-if="userStore.isAdmin && collectionsStore.allCollections.length === 0"
+				full-width
+				outlined
+				dashed
+				to="/settings/data-model/+"
+			>
+				{{ t('create_collection') }}
+			</v-button>
+
 			<navigation-item
 				v-for="collection in rootItems"
 				:key="collection.collection"
@@ -61,14 +73,16 @@ const hasHiddenCollections = computed(
 			/>
 
 			<v-menu v-if="hasHiddenCollections" ref="contextMenu" show-arrow placement="bottom-start">
-				<v-list-item clickable @click="showHidden = !showHidden">
-					<v-list-item-icon>
-						<v-icon :name="showHidden ? 'visibility_off' : 'visibility'" />
-					</v-list-item-icon>
-					<v-list-item-content>
-						<v-text-overflow :text="showHidden ? t('hide_hidden_collections') : t('show_hidden_collections')" />
-					</v-list-item-content>
-				</v-list-item>
+				<v-list>
+					<v-list-item clickable @click="showHidden = !showHidden">
+						<v-list-item-icon>
+							<v-icon :name="showHidden ? 'visibility_off' : 'visibility'" />
+						</v-list-item-icon>
+						<v-list-item-content>
+							<v-text-overflow :text="showHidden ? t('hide_hidden_collections') : t('show_hidden_collections')" />
+						</v-list-item-content>
+					</v-list-item>
+				</v-list>
 			</v-menu>
 		</v-list>
 	</div>
@@ -82,9 +96,9 @@ const hasHiddenCollections = computed(
 
 .empty {
 	.v-button {
-		--v-button-color: var(--foreground-subdued);
-		--v-button-background-color: var(--foreground-subdued);
-		--v-button-background-color-hover: var(--primary);
+		--v-button-color: var(--theme--foreground-subdued);
+		--v-button-background-color: var(--theme--foreground-subdued);
+		--v-button-background-color-hover: var(--theme--primary);
 	}
 }
 
@@ -115,7 +129,7 @@ const hasHiddenCollections = computed(
 }
 
 .hidden-collection {
-	--v-list-item-color: var(--foreground-subdued);
+	--v-list-item-color: var(--theme--foreground-subdued);
 }
 
 .search-input {
@@ -126,6 +140,6 @@ const hasHiddenCollections = computed(
 	z-index: 2;
 	padding: 12px;
 	padding-bottom: 0;
-	background-color: var(--background-normal);
+	background-color: var(--theme--background-normal);
 }
 </style>

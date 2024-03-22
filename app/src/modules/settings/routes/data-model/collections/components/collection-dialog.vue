@@ -9,7 +9,7 @@ import { Collection } from '@/types/collections';
 
 const props = defineProps<{
 	modelValue?: boolean;
-	collection?: Collection;
+	collection?: Collection | null;
 }>();
 
 const emit = defineEmits(['update:modelValue']);
@@ -36,7 +36,7 @@ watch(
 			values.color = props.collection?.color ?? null;
 			values.translations = props.collection?.meta?.translations ?? null;
 		}
-	}
+	},
 );
 
 const saving = ref(false);
@@ -58,8 +58,8 @@ async function save() {
 		}
 
 		emit('update:modelValue', false);
-	} catch (err) {
-		unexpectedError(err);
+	} catch (error) {
+		unexpectedError(error);
 	} finally {
 		saving.value = false;
 	}
@@ -72,7 +72,7 @@ async function save() {
 			<slot name="activator" v-bind="slotBinding" />
 		</template>
 
-		<v-card>
+		<v-card class="allow-drawer">
 			<v-card-title v-if="!collection">{{ t('create_folder') }}</v-card-title>
 			<v-card-title v-else>{{ t('edit_folder') }}</v-card-title>
 
@@ -150,6 +150,6 @@ async function save() {
 }
 
 .collection-key {
-	--v-input-font-family: var(--family-monospace);
+	--v-input-font-family: var(--theme--fonts--monospace--font-family);
 }
 </style>

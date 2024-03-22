@@ -3,14 +3,19 @@ import { useCollectionsStore } from '@/stores/collections';
 import { useFieldsStore } from '@/stores/fields';
 import { useFlowsStore } from '@/stores/flows';
 import RouterPass from '@/utils/router-passthrough';
-import { defineModule } from '@directus/utils';
+import { defineModule } from '@directus/extensions';
+import Appearance from './routes/appearance/item.vue';
 import Collections from './routes/data-model/collections/collections.vue';
 import FieldDetail from './routes/data-model/field-detail/field-detail.vue';
 import Fields from './routes/data-model/fields/fields.vue';
 import NewCollection from './routes/data-model/new-collection.vue';
+import Extensions from './routes/extensions/extensions.vue';
 import FlowOperationDetail from './routes/flows/components/operation-detail.vue';
 import FlowsDetail from './routes/flows/flow.vue';
 import FlowsOverview from './routes/flows/overview.vue';
+import MarketplaceAccount from './routes/marketplace/routes/account/account.vue';
+import MarketplaceExtension from './routes/marketplace/routes/extension/extension.vue';
+import MarketplaceRegistry from './routes/marketplace/routes/registry/registry.vue';
 import NotFound from './routes/not-found.vue';
 import PresetsCollection from './routes/presets/collection/collection.vue';
 import PresetsItem from './routes/presets/item.vue';
@@ -29,7 +34,6 @@ export default defineModule({
 	id: 'settings',
 	name: '$t:settings',
 	icon: 'settings',
-	color: 'var(--primary)',
 	routes: [
 		{
 			name: 'settings-data-model-redirect',
@@ -40,6 +44,11 @@ export default defineModule({
 			name: 'settings-project',
 			path: 'project',
 			component: Project,
+		},
+		{
+			name: 'settings-appearance',
+			path: 'appearance',
+			component: Appearance,
 		},
 		{
 			path: 'data-model',
@@ -216,6 +225,34 @@ export default defineModule({
 							props: true,
 						},
 					],
+				},
+			],
+		},
+		{
+			path: 'extensions',
+			component: Extensions,
+		},
+		{
+			name: 'marketplace',
+			path: 'marketplace',
+			component: RouterPass,
+			children: [
+				{
+					name: 'marketplace-registry',
+					path: '',
+					component: MarketplaceRegistry,
+				},
+				{
+					name: 'marketplace-account',
+					path: 'account/:accountId',
+					component: MarketplaceAccount,
+					props: true,
+				},
+				{
+					name: 'marketplace-extension',
+					path: 'extension/:extensionId',
+					component: MarketplaceExtension,
+					props: true,
 				},
 			],
 		},

@@ -1,28 +1,21 @@
-import type { AbstractSqlQuery } from '@directus/data-sql';
-import { escapeIdentifier } from '../utils/escape-identifier.js';
+import { type AbstractSqlClauses } from '@directus/data-sql';
+import { convertTarget } from '../utils/convert-target.js';
 
 /**
  * Generates the `ORDER BY x` part of a SQL statement.
  * The order direction is always set explicitly, although Postgres defaults to `ASC`.
  *
- * @param query - The abstract query
+ * @param query - The whole abstract SQL query
  * @returns The `ORDER BY x` part of a SQL statement
  */
-export function orderBy({ order }: AbstractSqlQuery): string | null {
+export function orderBy({ order }: AbstractSqlClauses): string | null {
 	if (order === undefined) {
 		return null;
 	}
 
 	const sortExpressions = order.map((o) => {
-		switch (o.orderBy.type) {
-			case 'primitive':
-				return `${escapeIdentifier(o.orderBy.field)} ${o.direction}`;
-			case 'fn':
-			case 'm2o':
-			case 'a2o':
-			default:
-				throw new Error(`Type ${o.orderBy.type} hasn't been implemented yet`);
-		}
+		const target = convertTarget(o.orderBy, 'object');
+		return `${target} ${o.direction}`;
 	});
 
 	return `ORDER BY ${sortExpressions.join(', ')}`;

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import api from '@/api';
+import { getAssetUrl } from '@/utils/get-asset-url';
 import { userName } from '@/utils/user-name';
 import { User } from '@directus/types';
 import { computed, onUnmounted, ref, watch } from 'vue';
@@ -22,7 +23,7 @@ const avatarSrc = computed(() => {
 	if (data.value === null) return null;
 
 	if (data.value.avatar?.id) {
-		return `/assets/${data.value.avatar.id}?key=system-medium-cover`;
+		return getAssetUrl(`${data.value.avatar.id}?key=system-medium-cover`);
 	}
 
 	return null;
@@ -119,7 +120,7 @@ function navigateToUser() {
 		margin-right: 4px;
 
 		&.active {
-			--v-chip-color: var(--success);
+			--v-chip-color: var(--theme--success);
 			--v-chip-background-color: var(--success-25);
 		}
 
@@ -129,23 +130,23 @@ function navigateToUser() {
 		}
 
 		&.invited {
-			--v-chip-color: var(--primary);
-			--v-chip-background-color: var(--primary-25);
+			--v-chip-color: var(--theme--primary);
+			--v-chip-background-color: var(--theme--primary-subdued);
 		}
 
 		&.suspended {
-			--v-chip-color: var(--warning);
+			--v-chip-color: var(--theme--warning);
 			--v-chip-background-color: var(--warning-25);
 		}
 
 		&.archived {
-			--v-chip-color: var(--danger);
+			--v-chip-color: var(--theme--danger);
 			--v-chip-background-color: var(--danger-25);
 		}
 	}
 
 	.email {
-		color: var(--foreground-subdued);
+		color: var(--theme--foreground-subdued);
 	}
 }
 
@@ -153,12 +154,12 @@ function navigateToUser() {
 	cursor: help;
 
 	&:hover {
-		border-bottom: 2px dotted var(--foreground-subdued);
+		border-bottom: 2px dotted var(--theme--foreground-subdued);
 	}
 }
 
 .loading {
-	--v-skeleton-loader-background-color: var(--background-normal);
+	--v-skeleton-loader-background-color: var(--theme--background-normal);
 
 	display: flex;
 	align-items: center;

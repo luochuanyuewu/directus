@@ -1,69 +1,75 @@
 // Tests will run sequentially according to this list
-export const sequentialTestsList: SequentialTestsList = {
-	before: [
-		{ testFilePath: '/common/seed-database.test.ts' },
-		{ testFilePath: '/common/common.test.ts' },
-		{ testFilePath: '/routes/schema/schema.test.ts' },
-		{ testFilePath: '/routes/collections/crud.test.ts' },
-		{ testFilePath: '/routes/fields/change-fields.test.ts' },
-	],
-	after: [
-		{ testFilePath: '/schema/timezone/timezone.test.ts' },
-		{ testFilePath: '/schema/timezone/timezone-changed-node-tz-america.test.ts' },
-		{ testFilePath: '/schema/timezone/timezone-changed-node-tz-asia.test.ts' },
-		{ testFilePath: '/websocket/auth.test.ts' },
-		{ testFilePath: '/websocket/general.test.ts' },
-		{ testFilePath: '/flows/schedule-hook.test.ts' },
-		{ testFilePath: '/logger/redact.test.ts' },
-		{ testFilePath: '/routes/permissions/cache-purge.test.ts' },
-		{ testFilePath: '/routes/flows/webhook.test.ts' },
-		{ testFilePath: '/app/cache.test.ts' },
-		{ testFilePath: '/routes/collections/schema-cache.test.ts' },
-		{ testFilePath: '/routes/assets/concurrency.test.ts' },
-	],
-	// If specified, only run these tests sequentially
-	only: [
-		// { testFilePath: '/common/seed-database.test.ts' },
-		// { testFilePath: '/common/common.test.ts' },
-	],
+export const sequentialTestsList: Record<'db' | 'common', SequentialTestsList> = {
+	common: {
+		before: ['/common/common.test.ts'],
+		after: [],
+		// If specified, only run these tests sequentially
+		only: [
+			// '/common/common.test.ts',
+		],
+	},
+	db: {
+		before: [
+			'/tests/db/seed-database.test.ts',
+			'/common/common.test.ts',
+			'/tests/db/routes/schema/schema.test.ts',
+			'/tests/db/routes/collections/crud.test.ts',
+			'/tests/db/routes/fields/change-fields.test.ts',
+		],
+		after: [
+			'/tests/db/schema/timezone/timezone.test.ts',
+			'/tests/db/schema/timezone/timezone-changed-node-tz-america.test.ts',
+			'/tests/db/schema/timezone/timezone-changed-node-tz-asia.test.ts',
+			'/tests/db/websocket/auth.test.ts',
+			'/tests/db/websocket/general.test.ts',
+			'/tests/db/routes/permissions/cache-purge.test.ts',
+			'/tests/db/routes/flows/webhook.test.ts',
+			'/tests/db/app/cache.test.ts',
+			'/tests/db/routes/collections/schema-cache.test.ts',
+			'/tests/db/routes/assets/concurrency.test.ts',
+		],
+		// If specified, only run these tests sequentially
+		only: [
+			// '/tests/db/seed-database.test.ts',
+			// '/common/common.test.ts',
+		],
+	},
 };
 
-export function getReversedTestIndex(testFilePath: string) {
-	if (sequentialTestsList.only.length > 0) {
-		for (let index = 0; index < sequentialTestsList.only.length; index++) {
-			const onlyTest = sequentialTestsList.only[index];
+export function getReversedTestIndex(testFilePath: string, project: 'db' | 'common') {
+	const list = sequentialTestsList[project];
 
-			if (onlyTest && testFilePath.includes(onlyTest.testFilePath)) {
+	if (list.only.length > 0) {
+		for (let index = 0; index < list.only.length; index++) {
+			const onlyTest = list.only[index];
+
+			if (onlyTest && testFilePath.includes(onlyTest)) {
 				return index;
 			}
 		}
 	}
 
-	for (let index = 0; index < sequentialTestsList.before.length; index++) {
-		const beforeTest = sequentialTestsList.before[index];
+	for (let index = 0; index < list.before.length; index++) {
+		const beforeTest = list.before[index];
 
-		if (beforeTest && testFilePath.includes(beforeTest.testFilePath)) {
+		if (beforeTest && testFilePath.includes(beforeTest)) {
 			return index;
 		}
 	}
 
-	for (let index = 0; index < sequentialTestsList.after.length; index++) {
-		const afterTest = sequentialTestsList.after[index];
+	for (let index = 0; index < list.after.length; index++) {
+		const afterTest = list.after[index];
 
-		if (afterTest && testFilePath.includes(afterTest.testFilePath)) {
-			return 0 - sequentialTestsList.after.length + index;
+		if (afterTest && testFilePath.includes(afterTest)) {
+			return 0 - list.after.length + index;
 		}
 	}
 
-	return sequentialTestsList.before.length;
+	return list.before.length;
 }
 
-type SequentialTestEntry = {
-	testFilePath: string;
-};
-
 type SequentialTestsList = {
-	before: SequentialTestEntry[];
-	after: SequentialTestEntry[];
-	only: SequentialTestEntry[];
+	before: string[];
+	after: string[];
+	only: string[];
 };

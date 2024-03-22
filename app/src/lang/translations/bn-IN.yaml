@@ -52,6 +52,8 @@ or: অথবা
 init: এটায়
 dataset_too_large_currently_showing_n_items: ডেটাসেটটি অনেক বড়ো। বর্তমানে শুধু মাত্র প্রথম {n} আইটেমটি দেখানো হচ্ছে।
 modifier: বাছাইকারী
+extension_hook: হুক
+extension_modules: মডিউল
 custom: ব্যক্তিগতকরণ
 hook: হুক
 fill_width: প্রস্থ পূরণ করুন
@@ -126,7 +128,6 @@ time: সময়
 timestamp: টাইমস্ট্যাম্প
 uuid: ইউইউআইডি
 hash: হ্যাশ
-geometry: জ্যামিতি (সমস্ত)
 fields:
   directus_settings:
     module_bar: মডিউল বার
@@ -145,6 +146,8 @@ interfaces:
 displays:
   formatted-value:
     text: পাঠ্য
+  hash:
+    hash: হ্যাশ
 operations:
   log:
     message: বার্তা

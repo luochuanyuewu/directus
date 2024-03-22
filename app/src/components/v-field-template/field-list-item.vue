@@ -2,14 +2,15 @@
 import { FieldTree } from './types';
 import formatTitle from '@directus/format-title';
 
-interface Props {
-	field: FieldTree;
-	depth?: number;
-}
-
-withDefaults(defineProps<Props>(), {
-	depth: undefined,
-});
+withDefaults(
+	defineProps<{
+		field: FieldTree;
+		depth?: number;
+	}>(),
+	{
+		depth: undefined,
+	},
+);
 
 defineEmits(['add']);
 </script>
@@ -21,6 +22,9 @@ defineEmits(['add']);
 		clickable
 		@click="$emit('add', field)"
 	>
+		<v-list-item-icon v-if="field.field.startsWith('$')">
+			<v-icon name="auto_awesome" small color="var(--theme--primary)" />
+		</v-list-item-icon>
 		<v-list-item-content>{{ field.name || formatTitle(field.field) }}</v-list-item-content>
 	</v-list-item>
 	<v-list-group v-else :value="field.key" clickable @click="$emit('add', field)">

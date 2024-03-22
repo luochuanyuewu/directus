@@ -1,14 +1,11 @@
 <script setup lang="ts">
 import { useUserStore } from '@/stores/user';
-import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import ContentNavigation from '../components/navigation.vue';
 
 const { t } = useI18n();
 
 const userStore = useUserStore();
-
-const isAdmin = computed(() => userStore.currentUser?.role.admin_access === true);
 </script>
 
 <template>
@@ -24,7 +21,7 @@ const isAdmin = computed(() => userStore.currentUser?.role.admin_access === true
 		</template>
 
 		<v-info icon="box" :title="t('no_collections')" center>
-			<template v-if="isAdmin">
+			<template v-if="userStore.isAdmin">
 				{{ t('no_collections_copy_admin') }}
 			</template>
 
@@ -32,7 +29,7 @@ const isAdmin = computed(() => userStore.currentUser?.role.admin_access === true
 				{{ t('no_collections_copy') }}
 			</template>
 
-			<template v-if="isAdmin" #append>
+			<template v-if="userStore.isAdmin" #append>
 				<v-button to="/settings/data-model/+">{{ t('create_collection') }}</v-button>
 			</template>
 		</v-info>
@@ -47,7 +44,7 @@ const isAdmin = computed(() => userStore.currentUser?.role.admin_access === true
 
 <style lang="scss" scoped>
 .icon {
-	--v-icon-color: var(--foreground-subdued);
+	--v-icon-color: var(--theme--foreground-subdued);
 
 	:deep(i) {
 		vertical-align: unset;
@@ -55,7 +52,7 @@ const isAdmin = computed(() => userStore.currentUser?.role.admin_access === true
 }
 
 .header-icon {
-	--v-button-color-disabled: var(--foreground-normal);
+	--v-button-color-disabled: var(--theme--foreground);
 }
 
 .v-table {

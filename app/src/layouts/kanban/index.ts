@@ -1,12 +1,13 @@
-import api, { addTokenToURL } from '@/api';
+import api from '@/api';
 import { useFieldsStore } from '@/stores/fields';
 import { useRelationsStore } from '@/stores/relations';
 import { useServerStore } from '@/stores/server';
 import { getRootPath } from '@/utils/get-root-path';
 import { translate } from '@/utils/translate-literal';
 import { useCollection, useFilterFields, useItems, useSync } from '@directus/composables';
+import { defineLayout } from '@directus/extensions';
 import { User } from '@directus/types';
-import { defineLayout, getEndpoint, getRelationType, moveInArray } from '@directus/utils';
+import { getEndpoint, getRelationType, moveInArray } from '@directus/utils';
 import { computed, ref, toRefs, watch } from 'vue';
 import KanbanActions from './actions.vue';
 import KanbanLayout from './kanban.vue';
@@ -49,7 +50,7 @@ export default defineLayout<LayoutOptions, LayoutQuery>({
 					(relation) =>
 						relation.meta?.one_collection === props.collection &&
 						relation.meta.one_field === field.field &&
-						relation.meta.junction_field !== null
+						relation.meta.junction_field !== null,
 				);
 
 				if (junction !== undefined) {
@@ -57,7 +58,7 @@ export default defineLayout<LayoutOptions, LayoutQuery>({
 						(relation) =>
 							relation.collection === junction.collection &&
 							relation.field === junction.meta?.junction_field &&
-							relation.related_collection === 'directus_users'
+							relation.related_collection === 'directus_users',
 					);
 
 					return related !== undefined;
@@ -66,7 +67,7 @@ export default defineLayout<LayoutOptions, LayoutQuery>({
 						(relation) =>
 							relation.collection === props.collection &&
 							relation.field === field.field &&
-							relation.related_collection === 'directus_users'
+							relation.related_collection === 'directus_users',
 					);
 
 					return related !== undefined;
@@ -82,7 +83,7 @@ export default defineLayout<LayoutOptions, LayoutQuery>({
 				}
 
 				const relation = relationsStore.relations.find(
-					(relation) => getRelationType({ relation, collection: collection.value, field: field.field }) === 'm2o'
+					(relation) => getRelationType({ relation, collection: collection.value, field: field.field }) === 'm2o',
 				);
 
 				return !!relation;
@@ -302,7 +303,7 @@ export default defineLayout<LayoutOptions, LayoutQuery>({
 			const fit = crop.value ? '&width=250&height=150' : `&key=system-medium-contain`;
 
 			const url = getRootPath() + `assets/${file.id}?modified=${file.modified_on}` + fit;
-			return addTokenToURL(url);
+			return url;
 		}
 
 		function useLayoutOptions() {
@@ -330,7 +331,7 @@ export default defineLayout<LayoutOptions, LayoutQuery>({
 					(relation) =>
 						relation.meta?.one_collection === props.collection &&
 						relation.meta.one_field === userField.value &&
-						relation.meta.junction_field !== null
+						relation.meta.junction_field !== null,
 				);
 			});
 
@@ -380,7 +381,7 @@ export default defineLayout<LayoutOptions, LayoutQuery>({
 					if (field === null) return null;
 
 					const relation = (relationsStore.relations as any[]).find(
-						(relation) => getRelationType({ relation, collection: collection.value, field }) === 'm2o'
+						(relation) => getRelationType({ relation, collection: collection.value, field }) === 'm2o',
 					);
 
 					if (relation === undefined || relation.related_collection === null) return null;
@@ -498,7 +499,7 @@ export default defineLayout<LayoutOptions, LayoutQuery>({
 							}
 
 							return choice;
-						}
+						},
 					);
 
 					await fieldsStore.updateField(selectedGroup.value.collection, selectedGroup.value.field, {
@@ -532,7 +533,7 @@ export default defineLayout<LayoutOptions, LayoutQuery>({
 							return { text: item.title, value: item.id };
 						}),
 						currentIndex,
-						targetIndex
+						targetIndex,
 					);
 
 					await fieldsStore.updateField(selectedGroup.value.collection, selectedGroup.value.field, {
@@ -607,7 +608,7 @@ export default defineLayout<LayoutOptions, LayoutQuery>({
 					fields.push(`${relatedUser}.avatar.modified_on`);
 				}
 
-				if (sort.value.length > 0) {
+				if (sort.value[0]) {
 					const sortField = sort.value[0].startsWith('-') ? sort.value[0].substring(1) : sort.value[0];
 
 					if (fields.includes(sortField) === false) {

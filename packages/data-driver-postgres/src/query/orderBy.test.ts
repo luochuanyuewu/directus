@@ -1,72 +1,112 @@
-import type { AbstractQueryFieldNodePrimitive } from '@directus/data';
-import type { AbstractSqlQuery } from '@directus/data-sql';
-import { randomIdentifier } from '@directus/random';
+import type { AbstractSqlClauses } from '@directus/data-sql';
+import { randomIdentifier, randomInteger } from '@directus/random';
 import { beforeEach, expect, test } from 'vitest';
 import { orderBy } from './orderBy.js';
 
-let sample: {
-	statement: AbstractSqlQuery;
-};
+let sample: AbstractSqlClauses;
+
+const tableName = randomIdentifier();
+const tableIndex = randomInteger(0, 100);
 
 beforeEach(() => {
 	sample = {
-		statement: {
-			select: [
-				{
-					type: 'primitive',
-					column: randomIdentifier(),
-					table: randomIdentifier(),
-					as: randomIdentifier(),
-				},
-				{ type: 'primitive', column: randomIdentifier(), table: randomIdentifier() },
-			],
-			from: randomIdentifier(),
-			parameters: [],
-		},
+		select: [],
+		from: { tableName, tableIndex },
 	};
 });
 
 test('Empty parametrized statement when order is not defined', () => {
-	expect(orderBy(sample.statement)).toStrictEqual(null);
+	expect(orderBy(sample)).toStrictEqual(null);
 });
 
 test('Returns order part for one primitive field', () => {
-	sample.statement.order = [
+	const field = randomIdentifier();
+
+	sample.order = [
 		{
 			orderBy: {
 				type: 'primitive',
-				field: randomIdentifier(),
+				columnName: field,
+				tableIndex: tableIndex,
 			},
+			type: 'order',
 			direction: 'ASC',
 		},
 	];
 
-	const expected = `ORDER BY "${(sample.statement.order[0]!.orderBy as AbstractQueryFieldNodePrimitive).field}" ASC`;
-
-	expect(orderBy(sample.statement)).toStrictEqual(expected);
+	const expected = `ORDER BY "t${tableIndex}"."${field}" ASC`;
+	expect(orderBy(sample)).toStrictEqual(expected);
 });
 
 test('Returns order part for multiple primitive fields', () => {
-	sample.statement.order = [
+	const columnName1 = randomIdentifier();
+	const columnName2 = randomIdentifier();
+
+	sample.order = [
 		{
 			orderBy: {
 				type: 'primitive',
-				field: randomIdentifier(),
+				columnName: columnName1,
+				tableIndex,
 			},
+			type: 'order',
 			direction: 'ASC',
 		},
 		{
 			orderBy: {
 				type: 'primitive',
-				field: randomIdentifier(),
+				columnName: columnName2,
+				tableIndex,
 			},
+			type: 'order',
 			direction: 'DESC',
 		},
 	];
 
-	const expected = `ORDER BY "${(sample.statement.order[0]!.orderBy as AbstractQueryFieldNodePrimitive).field}" ASC, "${
-		(sample.statement.order[1]!.orderBy as AbstractQueryFieldNodePrimitive).field
-	}" DESC`;
+	const expected = `ORDER BY "t${tableIndex}"."${columnName1}" ASC, "t${tableIndex}"."${columnName2}" DESC`;
+	expect(orderBy(sample)).toStrictEqual(expected);
+});
 
-	expect(orderBy(sample.statement)).toStrictEqual(expected);
+test('Returns order part when a function was applied', () => {
+	const columnName = randomIdentifier();
+
+	sample.order = [
+		{
+			orderBy: {
+				type: 'fn',
+				columnName,
+				tableIndex,
+				fn: {
+					type: 'arrayFn',
+					fn: 'count',
+				},
+			},
+			type: 'order',
+			direction: 'ASC',
+		},
+	];
+
+	const expected = `ORDER BY COUNT("t${tableIndex}"."${columnName}") ASC`;
+	expect(orderBy(sample)).toStrictEqual(expected);
+});
+
+test('Returns order part for a json target', () => {
+	const columnName = randomIdentifier();
+	const pathIndex = randomInteger(0, 100);
+
+	sample.order = [
+		{
+			orderBy: {
+				type: 'json',
+				columnName,
+				tableIndex,
+				path: [pathIndex],
+			},
+			type: 'order',
+			direction: 'ASC',
+		},
+	];
+
+	const expected = `ORDER BY "t${tableIndex}"."${columnName}" -> $${pathIndex + 1} ASC`;
+	expect(orderBy(sample)).toStrictEqual(expected);
 });

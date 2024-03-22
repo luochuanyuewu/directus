@@ -3,6 +3,10 @@ description:
   If you're looking for the fastest way to get up-and-running with Directus locally, this guide will get you there in minutes.
 ---
 
+<script setup lang="ts">
+import { data as packages } from '@/data/packages.data.js';
+</script>
+
 # Self-Hosting Quickstart
 
 <iframe style="width:100%; aspect-ratio:16/9; margin-top: 2em;" src="https://www.youtube.com/embed/J7tFWxAGkh4" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
@@ -25,39 +29,41 @@ As soon as there are new releases of Directus, we publish them on
 
 ## Create a Docker Compose File
 
-Create a new empty folder on your Desktop called `directus`.
+Create a new empty folder on your Desktop called `directus`. Within this new folder, create the three empty folders
+`database`, `uploads`, and `extensions`.
 
 Open a text editor such as Visual Studio Code, nano, Vim, TextEdit, or Notepad.
 
 Copy and paste the following and save the file as `docker-compose.yml`:
 
-```yml
-version: '3'
+```yaml-vue
+version: "3"
 services:
   directus:
-    image: directus/directus:latest
+    image: directus/directus:{{ packages.directus.version.full }}
     ports:
       - 8055:8055
     volumes:
       - ./database:/directus/database
       - ./uploads:/directus/uploads
+      - ./extensions:/directus/extensions
     environment:
-      KEY: 'replace-with-random-value'
-      SECRET: 'replace-with-random-value'
-      ADMIN_EMAIL: 'admin@example.com'
-      ADMIN_PASSWORD: 'd1r3ctu5'
-      DB_CLIENT: 'sqlite3'
-      DB_FILENAME: '/directus/database/data.db'
-      WEBSOCKETS_ENABLED: true
+      KEY: "replace-with-random-value"
+      SECRET: "replace-with-random-value"
+      ADMIN_EMAIL: "admin@example.com"
+      ADMIN_PASSWORD: "d1r3ctu5"
+      DB_CLIENT: "sqlite3"
+      DB_FILENAME: "/directus/database/data.db"
+      WEBSOCKETS_ENABLED: "true"
 ```
 
 Save the file. Let's step through it:
 
-- This file defines a single Docker container that will use the latest version of the `directus/directus` image.
+- This file defines a single Docker container that will use the specified version of the `directus/directus` image.
 - The `ports` list maps internal port `8055` is made available to our machine using the same port number, meaning we can
   access it from our computer's browser.
-- The`volumes` section maps internal `directus/database` and `directus/uploads` to our local file system alongside the
-  `docker-compose.yml` - meaning data is backed up outside of Docker containers.
+- The`volumes` section maps internal `database`, `uploads` and `extensions` data to our local file system alongside the
+  `docker-compose.yml` - meaning data is stored and persisted outside of Docker containers.
 - The `environment` section contains any [configuration variables](/self-hosted/config-options.html) we wish to set.
   - `KEY` and `SECRET` are required and should be long random values. `KEY` is used for telemetry and health tracking,
     and `SECRET` is used to sign access tokens.
@@ -93,5 +99,4 @@ docker compose up
 
 :::
 
-Directus should now be available at <a href="http://localhost:8055" target="_blank">http://localhost:8055</a> or
-<a href="http://127.0.0.1:8055" target="_blank">http://127.0.0.1:8055</a>
+Directus should now be available at http://localhost:8055 or http://127.0.0.1:8055.

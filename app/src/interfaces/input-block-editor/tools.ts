@@ -15,7 +15,6 @@ import ToggleBlock from 'editorjs-toggle-block';
 import { AttachesTool, ImageTool } from './plugins';
 
 export type UploaderConfig = {
-	addTokenToURL: (url: string, token: string) => string;
 	baseURL: string | undefined;
 	setFileHandler: (handler: any) => void;
 	setCurrentPreview?: (url: string) => void;
@@ -25,7 +24,7 @@ export type UploaderConfig = {
 export default function getTools(
 	uploaderConfig: UploaderConfig,
 	selection: Array<string>,
-	haveFilesAccess: boolean
+	haveFilesAccess: boolean,
 ): Record<string, object> {
 	const tools: Record<string, any> = {};
 	const fileRequiresTools = ['attaches', 'image'];

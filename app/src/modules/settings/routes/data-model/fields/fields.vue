@@ -4,13 +4,13 @@ import { useItem } from '@/composables/use-item';
 import { useShortcut } from '@/composables/use-shortcut';
 import { useCollectionsStore } from '@/stores/collections';
 import { useFieldsStore } from '@/stores/fields';
-import { useCollection } from '@directus/composables';
+import formatTitle from '@directus/format-title';
 import { computed, ref, toRefs } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import SettingsNavigation from '../../../components/navigation.vue';
 import FieldsManagement from './components/fields-management.vue';
-import formatTitle from '@directus/format-title';
+import { isSystemCollection } from '@directus/system-data';
 
 const props = defineProps<{
 	collection: string;
@@ -24,7 +24,6 @@ const { t } = useI18n();
 const router = useRouter();
 
 const { collection } = toRefs(props);
-const { info: collectionInfo } = useCollection(collection);
 const collectionsStore = useCollectionsStore();
 const fieldsStore = useFieldsStore();
 
@@ -70,7 +69,7 @@ function discardAndLeave() {
 </script>
 
 <template>
-	<private-view :title="collectionInfo && formatTitle(collectionInfo.collection)">
+	<private-view :title="formatTitle(collection)">
 		<template #headline>
 			<v-breadcrumb :items="[{ name: t('settings_data_model'), to: '/settings/data-model' }]" />
 		</template>
@@ -84,13 +83,13 @@ function discardAndLeave() {
 			<v-dialog v-model="confirmDelete" @esc="confirmDelete = false">
 				<template #activator="{ on }">
 					<v-button
-						v-if="item && item.collection.startsWith('directus_') === false"
+						v-if="isSystemCollection(collection) === false"
 						v-tooltip.bottom="t('delete_collection')"
 						rounded
 						icon
 						class="action-delete"
 						secondary
-						:disabled="item === null"
+						:disabled="!item"
 						@click="on"
 					>
 						<v-icon name="delete" />
@@ -142,9 +141,9 @@ function discardAndLeave() {
 				v-model="edits.meta"
 				collection="directus_collections"
 				:loading="loading"
-				:initial-values="item && item.meta"
+				:initial-values="item?.meta"
 				:primary-key="collection"
-				:disabled="item && item.collection.startsWith('directus_')"
+				:disabled="isSystemCollection(collection)"
 			/>
 		</div>
 
@@ -175,7 +174,7 @@ function discardAndLeave() {
 
 	.instant-save {
 		margin-left: 4px;
-		color: var(--warning);
+		color: var(--theme--warning);
 	}
 }
 
@@ -191,14 +190,14 @@ function discardAndLeave() {
 }
 
 .header-icon {
-	--v-button-background-color: var(--primary-10);
-	--v-button-color: var(--primary);
-	--v-button-background-color-hover: var(--primary-25);
-	--v-button-color-hover: var(--primary);
+	--v-button-background-color: var(--theme--primary-background);
+	--v-button-color: var(--theme--primary);
+	--v-button-background-color-hover: var(--theme--primary-subdued);
+	--v-button-color-hover: var(--theme--primary);
 }
 
 .action-delete {
-	--v-button-background-color-hover: var(--danger) !important;
+	--v-button-background-color-hover: var(--theme--danger) !important;
 	--v-button-color-hover: var(--white) !important;
 }
 </style>

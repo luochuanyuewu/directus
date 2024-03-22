@@ -1,4 +1,14 @@
-import { isDirectusError } from '@directus/errors';
+import { useEnv } from '@directus/env';
+import {
+	ErrorCode,
+	InvalidCredentialsError,
+	InvalidPayloadError,
+	InvalidProviderConfigError,
+	InvalidProviderError,
+	ServiceUnavailableError,
+	UnexpectedResponseError,
+	isDirectusError,
+} from '@directus/errors';
 import type { Accountability } from '@directus/types';
 import { Router } from 'express';
 import Joi from 'joi';
@@ -6,25 +16,15 @@ import type { Client, Error, LDAPResult, SearchCallbackResponse, SearchEntry } f
 import ldap from 'ldapjs';
 import getDatabase from '../../database/index.js';
 import emitter from '../../emitter.js';
-import env from '../../env.js';
-import {
-	ErrorCode,
-	InvalidCredentialsError,
-	InvalidPayloadError,
-	InvalidProviderError,
-	InvalidProviderConfigError,
-	ServiceUnavailableError,
-	UnexpectedResponseError,
-} from '../../errors/index.js';
-import logger from '../../logger.js';
+import { useLogger } from '../../logger.js';
 import { respond } from '../../middleware/respond.js';
 import { AuthenticationService } from '../../services/authentication.js';
 import { UsersService } from '../../services/users.js';
-import type { AuthDriverOptions, User } from '../../types/index.js';
+import type { AuthDriverOptions, AuthenticationMode, User } from '../../types/index.js';
 import asyncHandler from '../../utils/async-handler.js';
 import { getIPFromReq } from '../../utils/get-ip-from-req.js';
-import { getMilliseconds } from '../../utils/get-milliseconds.js';
 import { AuthDriver } from '../auth.js';
+import { REFRESH_COOKIE_OPTIONS, SESSION_COOKIE_OPTIONS } from '../../constants.js';
 
 interface UserInfo {
 	dn: string;
@@ -49,6 +49,8 @@ export class LDAPAuthDriver extends AuthDriver {
 
 	constructor(options: AuthDriverOptions, config: Record<string, any>) {
 		super(options, config);
+
+		const logger = useLogger();
 
 		const { bindDn, bindPassword, userDn, provider, clientUrl } = config;
 
@@ -76,6 +78,8 @@ export class LDAPAuthDriver extends AuthDriver {
 	}
 
 	private async validateBindClient(): Promise<void> {
+		const logger = useLogger();
+
 		const { bindDn, bindPassword, provider } = this.config;
 
 		return new Promise((resolve, reject) => {
@@ -123,7 +127,7 @@ export class LDAPAuthDriver extends AuthDriver {
 	private async fetchUserInfo(
 		baseDn: string,
 		filter?: ldap.EqualityFilter,
-		scope?: SearchScope
+		scope?: SearchScope,
 	): Promise<UserInfo | undefined> {
 		let { firstNameAttribute, lastNameAttribute, mailAttribute } = this.config;
 
@@ -174,7 +178,7 @@ export class LDAPAuthDriver extends AuthDriver {
 					res.on('end', () => {
 						resolve(undefined);
 					});
-				}
+				},
 			);
 		});
 	}
@@ -212,7 +216,7 @@ export class LDAPAuthDriver extends AuthDriver {
 					res.on('end', () => {
 						resolve(userGroups);
 					});
-				}
+				},
 			);
 		});
 	}
@@ -232,6 +236,8 @@ export class LDAPAuthDriver extends AuthDriver {
 			throw new InvalidCredentialsError();
 		}
 
+		const logger = useLogger();
+
 		await this.validateBindClient();
 
 		const { userDn, userScope, userAttribute, groupDn, groupScope, groupAttribute, defaultRoleId } = this.config;
@@ -242,7 +248,7 @@ export class LDAPAuthDriver extends AuthDriver {
 				attribute: userAttribute ?? 'cn',
 				value: payload['identifier'],
 			}),
-			userScope ?? 'one'
+			userScope ?? 'one',
 		);
 
 		if (!userInfo?.dn) {
@@ -258,7 +264,7 @@ export class LDAPAuthDriver extends AuthDriver {
 					attribute: groupAttribute ?? 'member',
 					value: groupAttribute?.toLowerCase() === 'memberuid' && userInfo.uid ? userInfo.uid : userInfo.dn,
 				}),
-				groupScope ?? 'one'
+				groupScope ?? 'one',
 			);
 
 			if (userGroups.length) {
@@ -282,7 +288,7 @@ export class LDAPAuthDriver extends AuthDriver {
 				`auth.update`,
 				{},
 				{ identifier: userInfo.dn, provider: this.config['provider'], providerPayload: { userInfo, userRole } },
-				{ database: getDatabase(), schema: this.schema, accountability: null }
+				{ database: getDatabase(), schema: this.schema, accountability: null },
 			);
 
 			// Only sync roles if the AD groups are configured
@@ -315,7 +321,7 @@ export class LDAPAuthDriver extends AuthDriver {
 			`auth.create`,
 			userPayload,
 			{ identifier: userInfo.dn, provider: this.config['provider'], providerPayload: { userInfo, userRole } },
-			{ database: getDatabase(), schema: this.schema, accountability: null }
+			{ database: getDatabase(), schema: this.schema, accountability: null },
 		);
 
 		try {
@@ -402,13 +408,15 @@ export function createLDAPAuthRouter(provider: string): Router {
 	const loginSchema = Joi.object({
 		identifier: Joi.string().required(),
 		password: Joi.string().required(),
-		mode: Joi.string().valid('cookie', 'json'),
+		mode: Joi.string().valid('cookie', 'json', 'session'),
 		otp: Joi.string(),
 	}).unknown();
 
 	router.post(
 		'/',
 		asyncHandler(async (req, res, next) => {
+			const env = useEnv();
+
 			const accountability: Accountability = {
 				ip: getIPFromReq(req),
 				role: null,
@@ -431,37 +439,36 @@ export function createLDAPAuthRouter(provider: string): Router {
 				throw new InvalidPayloadError({ reason: error.message });
 			}
 
-			const mode = req.body.mode || 'json';
+			const mode: AuthenticationMode = req.body.mode ?? 'json';
 
-			const { accessToken, refreshToken, expires } = await authenticationService.login(
-				provider,
-				req.body,
-				req.body?.otp
-			);
+			const { accessToken, refreshToken, expires } = await authenticationService.login(provider, req.body, {
+				session: mode === 'session',
+				otp: req.body?.otp,
+			});
 
-			const payload = {
-				data: { access_token: accessToken, expires },
-			} as Record<string, Record<string, any>>;
+			const payload = { access_token: accessToken, expires } as {
+				access_token: string;
+				expires: number;
+				refresh_token?: string;
+			};
 
 			if (mode === 'json') {
-				payload['data']!['refresh_token'] = refreshToken;
+				payload.refresh_token = refreshToken;
 			}
 
 			if (mode === 'cookie') {
-				res.cookie(env['REFRESH_TOKEN_COOKIE_NAME'], refreshToken, {
-					httpOnly: true,
-					domain: env['REFRESH_TOKEN_COOKIE_DOMAIN'],
-					maxAge: getMilliseconds(env['REFRESH_TOKEN_TTL']),
-					secure: env['REFRESH_TOKEN_COOKIE_SECURE'] ?? false,
-					sameSite: (env['REFRESH_TOKEN_COOKIE_SAME_SITE'] as 'lax' | 'strict' | 'none') || 'strict',
-				});
+				res.cookie(env['REFRESH_TOKEN_COOKIE_NAME'] as string, refreshToken, REFRESH_COOKIE_OPTIONS);
 			}
 
-			res.locals['payload'] = payload;
+			if (mode === 'session') {
+				res.cookie(env['SESSION_COOKIE_NAME'] as string, accessToken, SESSION_COOKIE_OPTIONS);
+			}
+
+			res.locals['payload'] = { data: payload };
 
 			return next();
 		}),
-		respond
+		respond,
 	);
 
 	return router;

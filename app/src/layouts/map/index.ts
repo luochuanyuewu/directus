@@ -4,8 +4,9 @@ import { getItemRoute } from '@/utils/get-route';
 import { saveAsCSV } from '@/utils/save-as-csv';
 import { syncRefProperty } from '@/utils/sync-ref-property';
 import { useCollection, useItems, useSync } from '@directus/composables';
+import { defineLayout } from '@directus/extensions';
 import { Field, Filter, GeometryOptions } from '@directus/types';
-import { defineLayout, getFieldsFromTemplate } from '@directus/utils';
+import { getFieldsFromTemplate } from '@directus/utils';
 import { cloneDeep, merge } from 'lodash';
 import { computed, ref, toRefs, unref, watch } from 'vue';
 import { useRouter } from 'vue-router';
@@ -54,18 +55,18 @@ export default defineLayout<LayoutOptions, LayoutQuery>({
 
 		const geometryFields = computed(() => {
 			return (fieldsInCollection.value as Field[]).filter(
-				({ type, meta }) => type.startsWith('geometry') || meta?.interface == 'map'
+				({ type, meta }) => type.startsWith('geometry') || meta?.interface == 'map',
 			);
 		});
 
 		watch(
 			geometryFields,
 			(fields) => {
-				if (!geometryField.value && fields.length > 0) {
+				if (!geometryField.value && fields[0]) {
 					geometryField.value = fields[0].field;
 				}
 			},
-			{ immediate: true }
+			{ immediate: true },
 		);
 
 		const geometryOptions = computed<GeometryOptions | undefined>(() => {

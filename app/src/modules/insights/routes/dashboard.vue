@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { AppTile } from '@/components/v-workspace-tile.vue';
 import { useEditsGuard } from '@/composables/use-edits-guard';
+import { useItemPermissions } from '@/composables/use-permissions';
 import { useShortcut } from '@/composables/use-shortcut';
 import { useExtensions } from '@/extensions';
 import { router } from '@/router';
 import { useInsightsStore } from '@/stores/insights';
-import { usePermissionsStore } from '@/stores/permissions';
 import { pointOnLine } from '@/utils/point-on-line';
+import CommentsSidebarDetail from '@/views/private/components/comments-sidebar-detail.vue';
 import RefreshSidebarDetail from '@/views/private/components/refresh-sidebar-detail.vue';
 import { useAppStore } from '@directus/stores';
 import { applyOptionsData } from '@directus/utils';
@@ -16,12 +17,13 @@ import { useI18n } from 'vue-i18n';
 import InsightsNavigation from '../components/navigation.vue';
 import InsightsNotFound from './not-found.vue';
 
-interface Props {
-	primaryKey: string;
-	panelKey?: string | null;
-}
-
-const props = withDefaults(defineProps<Props>(), { panelKey: null });
+const props = withDefaults(
+	defineProps<{
+		primaryKey: string;
+		panelKey?: string | null;
+	}>(),
+	{ panelKey: null },
+);
 
 const { t } = useI18n();
 
@@ -29,16 +31,13 @@ const { panels: panelsInfo } = useExtensions();
 
 const insightsStore = useInsightsStore();
 const appStore = useAppStore();
-const permissionsStore = usePermissionsStore();
 
 const { fullScreen } = toRefs(appStore);
 const { loading, errors, data, saving, hasEdits, refreshIntervals, variables } = toRefs(insightsStore);
 
 const zoomToFit = ref(false);
 
-const updateAllowed = computed<boolean>(() => {
-	return permissionsStore.hasPermission('directus_panels', 'update');
-});
+const { updateAllowed } = useItemPermissions('directus_panels', props.primaryKey, false);
 
 const now = new Date();
 
@@ -125,7 +124,7 @@ watch(
 	() => props.primaryKey,
 	() => {
 		insightsStore.refresh(props.primaryKey);
-	}
+	},
 );
 
 const confirmCancel = ref(false);
@@ -280,6 +279,8 @@ const refreshInterval = computed({
 				<div v-md="t('page_help_insights_dashboard')" class="page-description" />
 			</sidebar-detail>
 
+			<comments-sidebar-detail :key="primaryKey" collection="directus_dashboards" :primary-key="primaryKey" />
+
 			<refresh-sidebar-detail v-model="refreshInterval" @refresh="insightsStore.refresh(primaryKey)" />
 		</template>
 
@@ -399,16 +400,16 @@ const refreshInterval = computed({
 .fullscreen,
 .zoom-to-fit,
 .clear-changes {
-	--v-button-color: var(--foreground-normal);
-	--v-button-color-hover: var(--foreground-normal);
-	--v-button-background-color: var(--foreground-subdued);
-	--v-button-background-color-hover: var(--foreground-normal);
+	--v-button-color: var(--theme--foreground);
+	--v-button-color-hover: var(--theme--foreground);
+	--v-button-background-color: var(--theme--foreground-subdued);
+	--v-button-background-color-hover: var(--theme--foreground);
 	--v-button-color-active: var(--foreground-inverted);
-	--v-button-background-color-active: var(--primary);
+	--v-button-background-color-active: var(--theme--primary);
 }
 
 .header-icon {
-	--v-button-color-disabled: var(--foreground-normal);
+	--v-button-color-disabled: var(--theme--foreground);
 }
 
 .panel-container {
@@ -442,7 +443,7 @@ const refreshInterval = computed({
 	width: 100%;
 	height: 100%;
 
-	--v-icon-color: var(--danger);
+	--v-icon-color: var(--theme--danger);
 
 	.v-error {
 		margin-top: 8px;

@@ -27,6 +27,7 @@ method: Метод
 published: Опубліковано
 draft: Чернетка
 archived: Архівовано
+extensions: Розширення
 modules: Модулі
 module_bar: Панель модулів
 logs: Логи
@@ -53,6 +54,29 @@ or: Або
 init: Ініціалізація
 dataset_too_large_currently_showing_n_items: Дані завеликі. Зараз показуються перші {n} елементів.
 modifier: Модифікатор
+extension_interface: Інтерфейс
+extension_display: Відображати
+extension_layout: Макет
+extension_module: Модуль
+extension_panel: Панель
+extension_theme: Тема
+extension_hook: Хук
+extension_endpoint: Кінцева точка
+extension_operation: Операція
+extension_interfaces: Інтерфейси
+extension_displays: Дисплеї
+extension_layouts: Макети
+extension_modules: Модулі
+extension_panels: Панелі
+extension_themes: Теми
+extension_hooks: Гачки
+extension_endpoints: Кінцеві точки
+extension_operations: Операції
+extension_reload_required: Потрібне перезавантаження сторінки
+extension_reload_required_copy: Щоб побачити зміни після ввімкнення чи вимкнення розширень додатків, потрібно оновити сторінку.
+extension_reload_now: Перезавантажте зараз
+enable: Увімкнути
+disable: Вимкнути
 custom: Власний
 hook: Хук
 fill_width: Ширина заповнення
@@ -81,6 +105,10 @@ create_user: Новий користувач
 message: Повідомлення
 delete_panel: Видалити панель
 create_webhook: Створити вебхук
+create_custom_translation: Створити спеціальний переклад
+edit_custom_translation: Редагувати спеціальний переклад
+no_custom_translations: Немає спеціальних перекладів
+no_custom_translations_copy: Ще немає спеціальних перекладів.
 invite_users: Запросити друзів
 invite: Запросити
 email_already_invited: Користувача "{email}" вже запрошено
@@ -96,6 +124,29 @@ rename_folder: Перейменувати папку
 delete_folder: Видалити папку
 prefix: Префікс
 suffix: Суфікс
+keep: Тримати
+version: Версія
+version_key: Ключ версії
+version_name: Назва версії
+main_version: Головна
+switch_version: Змінити версію
+switch_version_copy: Ви впевнені, що бажаєте перейти на версію "{version}"? Незбережені зміни буде втрачено.
+create_version: Створити версію
+rename_version: Перейменувати версію
+compare_version: Порівняти версію
+save_version: Зберегти версію
+promote_version_disabled: Жодних змін
+promote_version_changes: Зміни
+promote_version_preview: Перегляд
+outdated_notice: >-
+  Основний елемент було оновлено після створення цієї версії. Перегляньте всі значення полів нижче та підтвердьте, яку версію слід використовувати під час підвищення цієї версії до основного елемента.
+promote_notice: >-
+  Перегляньте всі значення полів нижче та підтвердьте, яку версію слід використовувати під час підвищення цієї версії до основного елемента.
+delete_version: Видалити версію
+delete_version_copy: >-
+  Ви впевнені, що хочете видалити версію "{version}"? Цю дію не можна скасувати.
+delete_on_promote_copy: >-
+  Ви бажаєте видалити або зберегти версію "{version}" після підвищення?
 reset_bookmark: Скинути закладку
 update_bookmark: Оновити закладку
 delete_bookmark: Видалити закладку
@@ -117,6 +168,7 @@ archive_confirm_count: >-
   Жодного елементу не обрано | Ви впевнені, що хочете додати цей файл до архіву? | Ви впевнені, що хочете додати ці {count} файлів до архіву?
 reset_system_permissions_to: 'Скинути налаштування до:'
 reset_system_permissions_copy: Ця дія перезапише будь-які користувацькі дозволи, які ви могли задати до системних колекцій. Ви впевнені?
+the_following_are_minimum_permissions: Наступні мінімальні дозволи застосовуються автоматично, коли ввімкнено «Доступ до програми». За потреби можна надати додаткові дозволи, але не можна зменшити дозволи нижче цього рівня.
 app_access_minimum: Мінімальний доступ до додатку
 recommended_defaults: Рекомендовані значення за замовчуванням
 unarchive: Розархівувати
@@ -140,7 +192,14 @@ validationError:
   nnull: Значення не може бути null
   required: Значення є обов'язковим
   unique: Значення повинно бути унікальним
+  email: Значення має бути дійсною адресою електронної пошти
   regex: Значення має некоректний формат
+  starts_with: Значення має починатися з {substring}
+  istarts_with: Значення має починатися з {substring}
+  nstarts_with: Значення не може починатися з {substring}
+  nistarts_with: Значення не може починатися з {substring}
+  ends_with: Значення має закінчуватися на {substring}
+  iends_with: Значення має закінчуватися на {substring}
 all_access: Повний доступ
 no_access: Немає доступу
 use_custom: Використайте Користувацькі налаштування
@@ -237,13 +296,6 @@ time: Час
 timestamp: Часова відмітка
 uuid: UUID
 hash: Хеш
-geometry: Геометрія (Все)
-geometry.Point: Аспект
-geometry.LineString: Лінія
-geometry.Polygon: Полігон
-geometry.MultiPoint: Багатоточковий
-geometry.MultiLineString: Багаторядковий рядок
-geometry.MultiPolygon: Мультимногокутник
 not_available_for_type: Не доступно для цього типу
 create_translations: Створити переклади
 auto_refresh: Автооновлення
@@ -425,7 +477,6 @@ dimensions: Розміри
 size: Розмір
 created: Створено
 modified: Змінено
-checksum: Контрольна сума
 owner: Власник
 edited_by: Відредагували
 folder: Папка
@@ -581,7 +632,6 @@ errors:
   RECORD_NOT_UNIQUE: Виявлено ідентичне значення
   USER_SUSPENDED: Користувача призупинено
   CONTAINS_NULL_VALUES: Поле містить нульові значення
-  UNPROCESSABLE_ENTITY: Неможливо обробити запит
   INTERNAL_SERVER_ERROR: Неочікувана помилка
   NOT_NULL_VIOLATION: Значення не може бути null
   ILLEGAL_ASSET_TRANSFORMATION: Джерело зображення надто велике для попереднього перегляду
@@ -589,7 +639,6 @@ errors:
   VALUE_OUT_OF_RANGE: Значення є поза діапазоном
   INVALID_FOREIGN_KEY: Невірний зовнішній ключ
   UNKNOWN: Неочікувана помилка
-  GRAPHQL_VALIDATION_EXCEPTION: Виключення валідації GraphQL
   SERVICE_UNAVAILABLE: Сервіс недоступний
   UNSUPPORTED_MEDIA_TYPE: Непідтримуваний тип медіа
   UNEXPECTED_RESPONSE: Неочікувана відповідь
@@ -716,7 +765,6 @@ layout_options: Налаштування зовнішнього вигляду
 rows: Рядки
 columns: Колонки
 collection_setup: Налаштування колекції
-optional_system_fields: Необов'язкові поля системи
 value_unique: Значення повинно бути унікальним
 all_activity: Уся діяльність
 create_item: Створити об'єкт
@@ -923,11 +971,11 @@ editing_unit: 'Редагування {unit}'
 editing_in_batch: 'Пакетне редагування {count} елементів'
 no_options_available: Варіанти недоступні
 settings_data_model: Модель даних
-settings_permissions: Ролі і Дозволи
-settings_project: Налаштування проекту
+settings_project: Налаштування
 settings_webhooks: Вебхуки
 settings_flows: Автоматизація
-settings_presets: Шаблони і закладки
+settings_presets: Закладки
+settings_translations: Переклади
 one_or_more_options_are_missing: Одно або більше налаштувань відсутні
 scope: Область застосування
 actions: Дії
@@ -962,7 +1010,6 @@ page_help_files_collection: >-
   **Бібліотека файлів** — перелічує всі файли, завантажені до цього проекту. Налаштуйте макет, фільтри та сортування, щоб налаштувати свій вигляд, і навіть зберігайте закладки різних конфігурацій для швидкого доступу.
 page_help_files_item: >-
   **Відомості про файл** — форма для керування метаданими файлу, редагування вихідного об’єкта та оновлення налаштувань доступу.
-page_help_settings_project: "**Налаштування проекту** — глобальні параметри конфігурації вашого проекту."
 page_help_settings_datamodel_collections: >-
   **Модель даних: колекції** — перелічує всі доступні колекції. Це включає видимі, приховані та системні колекції, а також незмінені таблиці бази даних, які можна додавати.
 page_help_settings_datamodel_fields: >-
@@ -1084,10 +1131,6 @@ fields:
     tags: Теги
     user_preferences: Налаштування користувача
     language: Мова
-    theme: Тема
-    theme_auto: Автоматичний вибір (основано на системі)
-    theme_light: Світлий режим
-    theme_dark: Темний режим
     tfa_secret: Двофакторна автентифікація
     admin_options: Можливості адміністратора
     status: Статус
@@ -1125,7 +1168,6 @@ fields:
     project_color: Демонструвати колір
     project_logo: Демонструвати логотип
     default_language: Мова за замовчуванням
-    branding: Брендінг та стиль
     public_foreground: Публічний передній план
     public_background: Публічний фон
     public_note: Публічна нотатка
@@ -1185,7 +1227,6 @@ field_options:
   directus_settings:
     project_name_placeholder: Мій проект...
     project_color_note: Фон входу та логотипу
-    project_logo_note: Білий 40x40 SVG/PNG
     public_note_placeholder: Коротке загальнодоступне повідомлення, яке підтримує розміткове форматування...
     security_divider_title: Захист
     auth_password_policy:
@@ -1250,7 +1291,6 @@ field_options:
   directus_roles:
     name: Унікальна назва для цієї ролі...
     description: Опис цієї ролі...
-    ip_access: Додайте дозволені IP-адреси, залиште порожнім, щоб дозволити...
     fields:
       icon_name: Іконка
       name_name: Назва
@@ -1608,7 +1648,6 @@ interfaces:
     description: Вибрати кілька пов'язаних об'єктів
     no_collection: Колекцію не знайдено
   system-folder:
-    folder: Папка
     description: Обрати теку
     root_name: Корінь файлової бібліотеки
     system_default: Стандартні налаштування
@@ -1817,11 +1856,15 @@ displays:
     icon: Іконка
     border: Межа
     border_label: Показати межу
+    mask: Масковано
+    mask_label: Приховати справжнє значення
     text: Текст
     text_placeholder: Необов'язкове перевизначення значення...
   formatted-json-value:
     formatted-json-value: Форматоване значення JSON
     description: Відобразити форматовану версію об'єкту
+  hash:
+    hash: Хеш
   icon:
     icon: Іконка
     description: Відображати як значок
@@ -2058,3 +2101,12 @@ operations:
     parallel: Паралельно
     batch: Пакетно
     batch_size: Розмір пакету
+standard: Стандартний
+compact: Компактна
+style: Стиль
+fonts:
+  normal: Нормальний
+  bold: Напівжирний
+  black: Чорний
+  italic: Курсив
+  auto: Автоматично

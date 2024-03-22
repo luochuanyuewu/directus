@@ -1,12 +1,11 @@
 <script setup lang="ts">
-import { addTokenToURL } from '@/api';
 import { useNotificationsStore } from '@/stores/notifications';
 import { useUserStore } from '@/stores/user';
-import { getRootPath } from '@/utils/get-root-path';
+import { getAssetUrl } from '@/utils/get-asset-url';
 import { useAppStore } from '@directus/stores';
 import { User } from '@directus/types';
 import { storeToRefs } from 'pinia';
-import { Ref, computed, ref } from 'vue';
+import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 const { t } = useI18n();
@@ -23,10 +22,10 @@ const signOutActive = ref(false);
 
 const avatarURL = computed<string | null>(() => {
 	if (!userStore.currentUser || !('avatar' in userStore.currentUser) || !userStore.currentUser?.avatar) return null;
-	return addTokenToURL(`${getRootPath()}assets/${userStore.currentUser.avatar.id}?key=system-medium-cover`);
+	return getAssetUrl(`${userStore.currentUser.avatar.id}?key=system-medium-cover`);
 });
 
-const avatarError: Ref<null | Event> = ref(null);
+const avatarError = ref<null | Event>(null);
 
 const userProfileLink = computed<string>(() => {
 	const id = (userStore.currentUser as User).id;
@@ -97,9 +96,9 @@ const userFullName = userStore.fullName ?? undefined;
 	position: relative;
 
 	.v-avatar {
-		--v-button-color: var(--module-icon);
+		--v-button-color: var(--theme--navigation--modules--button--foreground);
 		--v-button-color-hover: var(--white);
-		--v-avatar-color: var(--module-background);
+		--v-avatar-color: var(--theme--navigation--modules--background);
 
 		position: relative;
 		z-index: 3;
@@ -116,15 +115,15 @@ const userFullName = userStore.fullName ?? undefined;
 				top: -1px;
 				right: 8px;
 				left: 8px;
-				height: 2px;
-				background-color: var(--module-icon);
+				height: var(--theme--border-width);
+				background-color: var(--theme--navigation--modules--button--foreground);
 				opacity: 0.25;
 				content: '';
 			}
 		}
 
 		.v-icon {
-			--v-icon-color: var(--module-icon);
+			--v-icon-color: var(--theme--navigation--modules--button--foreground);
 		}
 
 		&:hover {
@@ -133,7 +132,7 @@ const userFullName = userStore.fullName ?? undefined;
 			}
 
 			.v-icon {
-				--v-icon-color: var(--white);
+				--v-icon-color: var(--theme--navigation--modules--button--foreground-hover);
 			}
 		}
 	}
@@ -144,28 +143,23 @@ const userFullName = userStore.fullName ?? undefined;
 	}
 
 	.notifications {
-		--v-button-color: var(--module-icon);
-		--v-button-color-hover: var(--white);
-		--v-button-background-color: var(--module-background);
-		--v-button-background-color-hover: var(--module-background);
+		--v-button-color: var(--theme--navigation--modules--button--foreground);
+		--v-button-color-hover: var(--theme--navigation--modules--button--foreground-hover);
+		--v-button-background-color: var(--theme--navigation--modules--background);
+		--v-button-background-color-hover: var(--theme--navigation--modules--background);
 	}
 
 	.sign-out {
-		--v-button-color: var(--module-icon);
-		--v-button-background-color: var(--module-background);
-		--v-button-background-color-hover: var(--module-background);
+		--v-button-color: var(--theme--navigation--modules--button--foreground);
+		--v-button-color-hover: var(--theme--navigation--modules--button--foreground-hover);
+		--v-button-background-color: var(--theme--navigation--modules--background);
+		--v-button-background-color-hover: var(--theme--navigation--modules--background);
 
 		position: absolute;
 		top: 0;
 		left: 0;
 		z-index: 2;
 		transition: transform var(--fast) var(--transition);
-
-		&:hover {
-			.v-icon {
-				--v-icon-color: var(--primary);
-			}
-		}
 	}
 
 	.sign-out-enter-active,
