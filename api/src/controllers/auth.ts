@@ -1,8 +1,8 @@
 import { useEnv } from '@directus/env';
 import { ErrorCode, InvalidPayloadError, isDirectusError } from '@directus/errors';
 import type { Accountability } from '@directus/types';
-import { Router } from 'express';
 import type { Request } from 'express';
+import { Router } from 'express';
 import {
 	createLDAPAuthRouter,
 	createLocalAuthRouter,
@@ -10,17 +10,18 @@ import {
 	createOpenIDAuthRouter,
 	createSAMLAuthRouter,
 } from '../auth/drivers/index.js';
-import { REFRESH_COOKIE_OPTIONS, DEFAULT_AUTH_PROVIDER, SESSION_COOKIE_OPTIONS } from '../constants.js';
+import { DEFAULT_AUTH_PROVIDER, REFRESH_COOKIE_OPTIONS, SESSION_COOKIE_OPTIONS } from '../constants.js';
 import { useLogger } from '../logger.js';
 import { respond } from '../middleware/respond.js';
 import { AuthenticationService } from '../services/authentication.js';
 import { UsersService } from '../services/users.js';
+import type { AuthenticationMode } from '../types/auth.js';
 import asyncHandler from '../utils/async-handler.js';
 import { getAuthProviders } from '../utils/get-auth-providers.js';
 import { getIPFromReq } from '../utils/get-ip-from-req.js';
+import { getSecret } from '../utils/get-secret.js';
 import isDirectusJWT from '../utils/is-directus-jwt.js';
 import { verifyAccessJWT } from '../utils/jwt.js';
-import type { AuthenticationMode } from '../types/auth.js';
 
 const router = Router();
 const env = useEnv();
@@ -90,7 +91,7 @@ function getCurrentRefreshToken(req: Request, mode: AuthenticationMode): string 
 		const token = req.cookies[env['SESSION_COOKIE_NAME'] as string];
 
 		if (isDirectusJWT(token)) {
-			const payload = verifyAccessJWT(token, env['SECRET'] as string);
+			const payload = verifyAccessJWT(token, getSecret());
 			return payload.session;
 		}
 	}
@@ -106,7 +107,7 @@ router.post(
 			role: null,
 		};
 
-		const userAgent = req.get('user-agent');
+		const userAgent = req.get('user-agent')?.substring(0, 1024);
 		if (userAgent) accountability.userAgent = userAgent;
 
 		const origin = req.get('origin');
@@ -160,7 +161,7 @@ router.post(
 			role: null,
 		};
 
-		const userAgent = req.get('user-agent');
+		const userAgent = req.get('user-agent')?.substring(0, 1024);
 		if (userAgent) accountability.userAgent = userAgent;
 
 		const origin = req.get('origin');
@@ -207,7 +208,7 @@ router.post(
 			role: null,
 		};
 
-		const userAgent = req.get('user-agent');
+		const userAgent = req.get('user-agent')?.substring(0, 1024);
 		if (userAgent) accountability.userAgent = userAgent;
 
 		const origin = req.get('origin');
@@ -246,7 +247,7 @@ router.post(
 			role: null,
 		};
 
-		const userAgent = req.get('user-agent');
+		const userAgent = req.get('user-agent')?.substring(0, 1024);
 		if (userAgent) accountability.userAgent = userAgent;
 
 		const origin = req.get('origin');
@@ -261,9 +262,12 @@ router.post(
 
 router.get(
 	'/',
-	asyncHandler(async (_req, res, next) => {
+	asyncHandler(async (req, res, next) => {
+		const sessionOnly =
+			'sessionOnly' in req.query && (req.query['sessionOnly'] === '' || Boolean(req.query['sessionOnly']));
+
 		res.locals['payload'] = {
-			data: getAuthProviders(),
+			data: getAuthProviders({ sessionOnly }),
 			disableDefault: env['AUTH_DISABLE_DEFAULT'],
 		};
 
